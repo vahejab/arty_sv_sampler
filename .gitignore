@@ -1,7 +1,7 @@
-# Ignore all files...
-*.*
+# ignore all files and directories
+*
 
-# except these files
+# except these file extensions
 !.gitignore
 !*.sv
 !*.v
@@ -9,3 +9,20 @@
 !*.c
 !*.cpp
 !*.h
+!*.xdc
+
+# un-ignore directories
+!*/
+# but still ignore these
+arty_sv_sampler.cache
+arty_sv_sampler.hw
+arty_sv_sampler.runs
+arty_sv_sampler.hls
+arty_sv_sampler.ip_user_files
+arty_sv_sampler.ipdefs
+VC707_Test_bsp
+.metadata
+sim_1
+ip
+.Xil/
+.Xil/*.xdc
