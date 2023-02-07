@@ -1,0 +1,11 @@
+# Ignore all files...
+*.*
+
+# except these files
+!.gitignore
+!*.sv
+!*.v
+!*.vh
+!*.c
+!*.cpp
+!*.h
