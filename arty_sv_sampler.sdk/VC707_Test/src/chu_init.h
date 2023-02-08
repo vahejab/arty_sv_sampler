@@ -32,10 +32,11 @@
 // library
 #include "chu_io_rw.h"
 #include "chu_io_map.h"
+#include "chu_io_rw.h"
 #include "timer_core.h"
 #include "uart_core.h"
 
-//  make uart visible by other code
+//  Make Uart visible by other code
 extern UartCore uart;
 
 #ifdef __cplusplus

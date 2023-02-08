@@ -44,7 +44,7 @@ int Ps2Core::rx_byte() {
    uint32_t data;
 
    if (rx_fifo_empty())  // no data
-      return (-1);
+      return (0);
    else {
       data = io_read(base_addr, RD_DATA_REG) & RX_DATA_FIELD;
       io_write(base_addr, RM_RD_DATA_REG, 0); //dummy write to remove data from rx FIFO
@@ -78,49 +78,65 @@ int hex(int num)
  */
 int Ps2Core::init() {
    //int packet;
-   //static int loop = 0;
+   static int loop = 0;
    /* Flush fifo buffer */
-   //while(!rx_fifo_empty()) {
-	  //rx_byte();
-   //}
-   //loop++;
-   tx_byte(0xF4);  //Enable Data Reporting
+   while(!rx_fifo_empty()) {
+	  rx_byte();
+   }
+   if (loop == 0) {
+	   tx_byte(0xF4); //Enable Data Reporting
+	   //sleep_ms(200);
+	   if (hex(rx_byte()) != 0xFA)//Check response (Acknowledge)
+		   return -1;
+   }
+   loop++;
+   tx_byte(0xFF);  //Reset Mouse
+   sleep_ms(200);
    if (hex(rx_byte()) != 0xFA)//Check response (Acknowledge)
 	   return -1;
-   //if (hex(rx_byte()) != 0xAA)//Check response (Acknowledge)
-   ///return -1;
-   //if (hex(rx_byte()) != 0x00)//Check response (Acknowledge)
-   //	return -1;
+   if (hex(rx_byte()) != 0xAA)//Check response (Basic Assurance Test)
+	   return -1;
+   if (hex(rx_byte()) != 0x00)//Check response (Mouse ID)
+	   return -1;
 
-   /*tx_byte(0xFF); //Reset Mouse
-   //sleep_ms(2000);
-   if (hex(rx_byte()) != 0xFA)//Check response (Acknowledge)
- 	   return -1;
    tx_byte(0xF3); //Set Sample Rate
+   sleep_ms(200);
    if (hex(rx_byte()) != 0xFA)//Check response (Acknowledge)
 	   return -1;
+
    tx_byte(0xC8); //Send 200
+   sleep_ms(200);
    if (hex(rx_byte()) != 0xFA)//Check response (Acknowledge)
 	   return -2;
+
    tx_byte(0xF3); //Set Sample Rate
+   sleep_ms(200);
    if (hex(rx_byte()) != 0xFA)//Check response (Acknowledge)
 	   return -3;
+
    tx_byte(0x64); //Send 100
+   sleep_ms(200);
    if (hex(rx_byte()) != 0xFA)//Check response (Acknowledge)
 	   return -4;
+
    tx_byte(0xF3); //Set Sample Rate
+   sleep_ms(200);
    if (hex(rx_byte()) != 0xFA)//Check response (Acknowledge)
 	   return -5;
    tx_byte(0x50); //Send 80
+   sleep_ms(200);
    if (hex(rx_byte()) != 0xFA)//Check response (Acknowledge)
 	   return -6;
+
    tx_byte(0xF2); //Read Device Type
+   sleep_ms(200);
    if (hex(rx_byte()) != 0xFA)//Check response (Acknowledge)
   	   return -7;
    if (hex(rx_byte()) != 0x03)//Check response (Acknowledge)
 	   return -8;
-   */
+
    tx_byte(0xEA); //Set Enable State
+   sleep_ms(200);
    if (hex(rx_byte()) != 0xFA)//Check response (Acknowledge)
   	   return -2;
    return (2);  //Mouse Detected and Initialized Successfully
