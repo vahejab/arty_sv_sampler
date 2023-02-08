@@ -78,22 +78,24 @@ int hex(int num)
  */
 int Ps2Core::init() {
    //int packet;
-   static int loop = 0;
+   //static int reporting = 0;
    /* Flush fifo buffer */
    while(!rx_fifo_empty()) {
-	  rx_byte();
+     rx_byte();
    }
-   if (loop == 0) {
-	   tx_byte(0xF4); //Enable Data Reporting
-	   //sleep_ms(200);
-	   if (hex(rx_byte()) != 0xFA)//Check response (Acknowledge)
-		   return -1;
-   }
-   loop++;
+   tx_byte(0xF4);  //Enable Data Reporting
+   sleep_ms(200);
+   return 2;
+   //if (reporting == 0) {
+
+   //if (hex(rx_byte()) != 0xFA)//Check response (Acknowledge)
+   //   return -1;
+   //}
    tx_byte(0xFF);  //Reset Mouse
    sleep_ms(200);
    if (hex(rx_byte()) != 0xFA)//Check response (Acknowledge)
 	   return -1;
+   sleep_ms(200);
    if (hex(rx_byte()) != 0xAA)//Check response (Basic Assurance Test)
 	   return -1;
    if (hex(rx_byte()) != 0x00)//Check response (Mouse ID)
@@ -152,13 +154,7 @@ int Ps2Core::get_mouse_activity(int *lbtn, int *rbtn, int *xmov,
    while (rx_fifo_empty())
 	   ;
    b1 = rx_byte();
-   /* wait and retrieve 2nd byte */
-   while (rx_fifo_empty())
-      ;
    b2 = rx_byte();
-   /* wait and retrieve 3rd byte */
-   while (rx_fifo_empty())
-      ;
    b3 = rx_byte();
    /* extract button info */
    *lbtn = (int) (b1 & 0x01);      // extract bit 0
