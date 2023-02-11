@@ -25,25 +25,33 @@
 
 class Ps2Core {
 public:
+ /**
+  * Register map
+  *
+  */
+  enum reg{
+	RD_DATA_REG = 0, /**< read data/status register */
+	PS2_WR_DATA_REG = 2, /**< 8-bit write data register */
+	RM_RD_DATA_REG = 3  // remove read data
+  };
   /**
-   * Register map
-   *
-   */
-   enum {
-      RD_DATA_REG = 0, /**< read data/status register */
-      PS2_WR_DATA_REG = 2, /**< 8-bit write data register */
-      RM_RD_DATA_REG = 3  // remove read data
-   };
-
+    * Transmit/Receive Direction
+    *
+    */
+  enum dir{
+	RECV = 0,
+	SEND = 1
+  };
   /**
    * field masks
    *
    */
-   enum {
-      TX_IDLE_FIELD = 0x00000200, /**< bit 9 of rd_data_reg; full bit  */
-      RX_EMPT_FIELD = 0x00000100, /**< bit 10 of rd_data_reg; empty bit */
-      RX_DATA_FIELD = 0x000000ff  /**< bits of 7..0 rd_data_reg; read data */
+   enum field{
+	TX_IDLE_FIELD = 0x00000200, /**< bit 9 of rd_data_reg; full bit  */
+	RX_EMPT_FIELD = 0x00000100, /**< bit 10 of rd_data_reg; empty bit */
+	RX_DATA_FIELD = 0x000000ff  /**< bits of 7..0 rd_data_reg; read data */
    };
+
   /* methods */
   /**
    * constructor.
@@ -76,7 +84,7 @@ public:
     * @param cmd 8-bit command
     *
     */
-   void tx_byte(uint8_t cmd);
+   uint8_t tx_byte(uint8_t cmd);
 
    /**
     * check ps2 fifo and, if not empty, read data and then remove it
@@ -122,6 +130,14 @@ public:
     * @note special codes returned for non-ASCII keys (F1, ESC etc.)
     */
    int get_kb_ch(char *ch);
+
+
+   /**
+    * hex
+    *
+    * @return num after outputting hex equivalent
+    */
+   int hex(dir direction, int num);
 
 private:
    /* variable to keep track of current status */

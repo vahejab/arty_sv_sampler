@@ -36,8 +36,9 @@ int Ps2Core::tx_idle() {
    return (idle);
 }
 
-void Ps2Core::tx_byte(uint8_t cmd) {
+uint8_t Ps2Core::tx_byte(uint8_t cmd) {
    io_write(base_addr, PS2_WR_DATA_REG, (uint32_t ) cmd);
+   return cmd;
 }
 
 int Ps2Core::rx_byte() {
@@ -53,18 +54,21 @@ int Ps2Core::rx_byte() {
 }
 
 
-int hex(int num)
+int Ps2Core::hex(dir direction = dir::SEND, int num = 0)
 {
 	//uart.disp("(");
 	//uart.disp(num);
 	//uart.disp(") ");
+	if (direction == dir::RECV){
+		uart.disp("    ");
+	}
+	uart.disp((direction == dir::RECV)? "Recv:": "Send:");
 	uart.disp(" 0x");
     uart.disp("0123456789ABCDEF"[(int)(0x0F & (num >> 4))]);
     uart.disp("0123456789ABCDEF"[(int)(0x0F & num)]);
-    uart.disp("");
+    uart.disp("\r\n");
     return num;
 }
-
 
 /* procedure:
  *    1. flush ps2 receiver fifo
@@ -77,73 +81,53 @@ int hex(int num)
  *    7. mouse acknowledges (0xfa)
  */
 int Ps2Core::init() {
-   //int packet;
-   //static int reporting = 0;
    /* Flush fifo buffer */
    while(!rx_fifo_empty()) {
      rx_byte();
    }
-   tx_byte(0xF4);  //Enable Data Reporting
+   hex(dir::SEND, tx_byte(0xF4));  //Enable Data Reporting
    sleep_ms(200);
-   return 2;
-   //if (reporting == 0) {
-
-   //if (hex(rx_byte()) != 0xFA)//Check response (Acknowledge)
-   //   return -1;
-   //}
-   tx_byte(0xFF);  //Reset Mouse
+   if (hex(dir::RECV, rx_byte()) != 0xFA)//Check response (Acknowledge)
+		if(hex(dir::RECV, rx_byte()) == -1) //Empty Response
+			return 2; //Then likely the mouse is already streaming packets
+   hex(dir::SEND, tx_byte(0xFF));  //Reset Mouse
    sleep_ms(200);
-   if (hex(rx_byte()) != 0xFA)//Check response (Acknowledge)
-	   return -1;
+   if (hex(dir::RECV, rx_byte()) != 0xFA) return -1;//Check response (Acknowledge)
    sleep_ms(200);
-   if (hex(rx_byte()) != 0xAA)//Check response (Basic Assurance Test)
-	   return -1;
-   if (hex(rx_byte()) != 0x00)//Check response (Mouse ID)
-	   return -1;
-
-   tx_byte(0xF3); //Set Sample Rate
-   sleep_ms(200);
-   if (hex(rx_byte()) != 0xFA)//Check response (Acknowledge)
-	   return -1;
-
-   tx_byte(0xC8); //Send 200
-   sleep_ms(200);
-   if (hex(rx_byte()) != 0xFA)//Check response (Acknowledge)
-	   return -2;
-
-   tx_byte(0xF3); //Set Sample Rate
-   sleep_ms(200);
-   if (hex(rx_byte()) != 0xFA)//Check response (Acknowledge)
-	   return -3;
-
-   tx_byte(0x64); //Send 100
-   sleep_ms(200);
-   if (hex(rx_byte()) != 0xFA)//Check response (Acknowledge)
-	   return -4;
-
-   tx_byte(0xF3); //Set Sample Rate
-   sleep_ms(200);
-   if (hex(rx_byte()) != 0xFA)//Check response (Acknowledge)
-	   return -5;
-   tx_byte(0x50); //Send 80
-   sleep_ms(200);
-   if (hex(rx_byte()) != 0xFA)//Check response (Acknowledge)
-	   return -6;
-
-   tx_byte(0xF2); //Read Device Type
-   sleep_ms(200);
-   if (hex(rx_byte()) != 0xFA)//Check response (Acknowledge)
-  	   return -7;
-   if (hex(rx_byte()) != 0x03)//Check response (Acknowledge)
-	   return -8;
-
-   tx_byte(0xEA); //Set Enable State
-   sleep_ms(200);
-   if (hex(rx_byte()) != 0xFA)//Check response (Acknowledge)
-  	   return -2;
+   //Receive Remaining two packets, without checking values
+   hex(dir::RECV, rx_byte());//0xAA (Basic Assurance Test)
+   hex(dir::RECV, rx_byte());//0x00 (Mouse ID)
+   hex(dir::SEND, tx_byte(0xF3)); //Set Sample Rate
+   sleep_ms(100);
+   if (hex(dir::RECV, rx_byte()) != 0xFA) return -2;
+   hex(dir::SEND, tx_byte(0xC8)); //Send 200
+   sleep_ms(100);
+   if (hex(dir::RECV, rx_byte()) != 0xFA) return -3;
+   hex(dir::SEND, tx_byte(0xF3)); //Set Sample Rate
+   sleep_ms(100);
+   if (hex(dir::RECV, rx_byte()) != 0xFA) return -4;
+   hex(dir::SEND, tx_byte(0x64)); //Send 100
+   sleep_ms(100);
+   if (hex(dir::RECV, rx_byte()) != 0xFA) return -5;
+   hex(dir::SEND, tx_byte(0xF3)); //Set Sample Rate
+   sleep_ms(100);
+   if (hex(dir::RECV, rx_byte()) != 0xFA) return -6;
+   hex(dir::SEND, tx_byte(0x50)); //Send 80
+   sleep_ms(100);
+   if (hex(dir::RECV, rx_byte()) != 0xFA) return -7;
+   hex(dir::SEND, tx_byte(0xF2)); //Read Device Type
+   sleep_ms(100);
+   if (hex(dir::RECV, rx_byte()) != 0xFA) return -8;
+   //if (hex(dir::RECV, rx_byte()) != 0x03) return -12;
+   hex(dir::SEND, tx_byte(0xEA)); //Set Enable State
+   sleep_ms(100);
+   if (hex(dir::RECV, rx_byte()) != 0xFA) return -9;
+   /* Flush fifo buffer */
+   while(!rx_fifo_empty()) {
+	 rx_byte();
+   }
    return (2);  //Mouse Detected and Initialized Successfully
 }
-
 int Ps2Core::get_mouse_activity(int *lbtn, int *rbtn, int *xmov,
       int *ymov) {
    uint8_t b1, b2, b3;
@@ -154,7 +138,13 @@ int Ps2Core::get_mouse_activity(int *lbtn, int *rbtn, int *xmov,
    while (rx_fifo_empty())
 	   ;
    b1 = rx_byte();
+   /* wait and retrieve 2nd byte */
+   while (rx_fifo_empty())
+      ;
    b2 = rx_byte();
+   /* wait and retrieve 3rd byte */
+   while (rx_fifo_empty())
+      ;
    b3 = rx_byte();
    /* extract button info */
    *lbtn = (int) (b1 & 0x01);      // extract bit 0
@@ -175,29 +165,29 @@ int Ps2Core::get_mouse_activity(int *lbtn, int *rbtn, int *xmov,
 
 int Ps2Core::get_kb_ch(char *ch) {
    // special  characters
-#define TAB     0x09   // tab
-#define BKSP    0x08   // backspace
-#define ENTER   0x0d   // enter (new line)
-#define ESC     0x1b   // escape
-#define BKSL    0x5c   // back slash
-#define SFT_L   0x12   // left shift
-#define SFT_R   0x59   // right shift
+   #define TAB     0x09   // tab
+   #define BKSP    0x08   // backspace
+   #define ENTER   0x0d   // enter (new line)
+   #define ESC     0x1b   // escape
+   #define BKSL    0x5c   // back slash
+   #define SFT_L   0x12   // left shift
+   #define SFT_R   0x59   // right shift
 
-#define CAPS    0x80
-#define NUM     0x81
-#define CTR_L   0x82
-#define F1      0xf0
-#define F2      0xf1
-#define F3      0xf2
-#define F4      0xf3
-#define F5      0xf4
-#define F6      0xf5
-#define F7      0xf6
-#define F8      0xf7
-#define F9      0xf8
-#define F10     0xf9
-#define F11     0xfa
-#define F12     0xfb
+   #define CAPS    0x80
+   #define NUM     0x81
+   #define CTR_L   0x82
+   #define F1      0xf0
+   #define F2      0xf1
+   #define F3      0xf2
+   #define F4      0xf3
+   #define F5      0xf4
+   #define F6      0xf5
+   #define F7      0xf6
+   #define F8      0xf7
+   #define F9      0xf8
+   #define F10     0xf9
+   #define F11     0xfa
+   #define F12     0xfb
 
    // keyboard scan code to ascii (lowercase)
    static const uint8_t SCAN2ASCII_LO_TABLE[128] = {

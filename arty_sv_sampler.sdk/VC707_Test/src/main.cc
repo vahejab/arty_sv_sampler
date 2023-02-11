@@ -30,7 +30,7 @@ void uart_check() {
 
 void ps2_check(Ps2Core *ps2_p) {
 	int id;
-	int lbtn, rbtn, xmov, ymov, zmov;
+	int lbtn, rbtn, xmov, ymov;
 	//static int x = 0, y = 0;
 	char ch;
 	unsigned long last;
@@ -53,8 +53,6 @@ void ps2_check(Ps2Core *ps2_p) {
 					uart.disp(xmov);
 					uart.disp(", ");
 					uart.disp(ymov);
-					uart.disp(", ");
-				    uart.disp(zmov);
 					uart.disp("] \r\n");
 					last = now_ms();
 				}   // end get_mouse_activitiy()
