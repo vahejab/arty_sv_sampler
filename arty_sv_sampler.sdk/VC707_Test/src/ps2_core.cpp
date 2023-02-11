@@ -43,14 +43,14 @@ uint8_t Ps2Core::tx_byte(uint8_t cmd) {
 
 int Ps2Core::rx_byte() {
    uint32_t data;
-   //Removed empty clause to see if read would respond correctly
-   //if (rx_fifo_empty())  // no data
-   //   return (0);
-   //else {
+
+   if (rx_fifo_empty())  // no data
+      return (0);
+   else {
       data = io_read(base_addr, RD_DATA_REG) & RX_DATA_FIELD;
       io_write(base_addr, RM_RD_DATA_REG, 0); //dummy write to remove data from rx FIFO
       return ((int) data);
-   //}
+   }
 }
 
 
@@ -82,8 +82,9 @@ int Ps2Core::hex(dir direction = dir::SEND, int num = 0)
  */
 int Ps2Core::init() {
    /* Flush fifo buffer */
-   //while(!rx_fifo_empty()) {
-   //  rx_byte();
+   while(!rx_fifo_empty()) {
+	   hex(dir::RECV, rx_byte());
+   }
    hex(dir::SEND, tx_byte(0xFF));  //Reset Mouse
    sleep_ms(200);
    if (hex(dir::RECV, rx_byte()) != 0xFA) return -1;//Check response (Acknowledge)
