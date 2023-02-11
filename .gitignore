@@ -7,8 +7,10 @@
 !*.v
 !*.vh
 !*.c
+!*.cc
 !*.cpp
 !*.h
+!*.ld
 !*.xdc
 
 # un-ignore directories

@@ -56,30 +56,28 @@ module mmio_sys_sampler_arty_a7
     );
 
    // slot 1: UART 
-   chu_uart #(.FIFO_DEPTH_BIT(8))  uart_slot1 
+   chu_uart #(.FIFO_DEPTH_BIT(8))  uart_slot1
    (.clk(clk),
     .reset(reset),
-    .cs(cs_array[`S1_UART1]),
-    .read(mem_rd_array[`S1_UART1]),
-    .write(mem_wr_array[`S1_UART1]),
-    .addr(reg_addr_array[`S1_UART1]),
-    .rd_data(rd_data_array[`S1_UART1]),
-    .wr_data(wr_data_array[`S1_UART1]), 
+    .cs(cs_array[`S1_UART]),
+    .read(mem_rd_array[`S1_UART]),
+    .write(mem_wr_array[`S1_UART]),
+    .addr(reg_addr_array[`S1_UART]),
+    .rd_data(rd_data_array[`S1_UART]),
+    .wr_data(wr_data_array[`S1_UART]), 
     .tx(tx),
     .rx(rx)
     );
-
-
-   // slot 11: ps2 
-    chu_ps2_core #(.W_SIZE(10)) ps2_slot11 
+   // slot 2: ps2 
+    chu_ps2_core #(.W_SIZE(6)) ps2_slot2 
     (.clk(clk),
      .reset(reset),
-     .cs(cs_array[`S11_PS2]),
-     .read(mem_rd_array[`S11_PS2]),
-     .write(mem_wr_array[`S11_PS2]),
-     .addr(reg_addr_array[`S11_PS2]),
-     .rd_data(rd_data_array[`S11_PS2]),
-     .wr_data(wr_data_array[`S11_PS2]),
+     .cs(cs_array[`S2_PS2]),
+     .read(mem_rd_array[`S2_PS2]),
+     .write(mem_wr_array[`S2_PS2]),
+     .addr(reg_addr_array[`S2_PS2]),
+     .rd_data(rd_data_array[`S2_PS2]),
+     .wr_data(wr_data_array[`S2_PS2]),
      .ps2d_in(ps2d_in),
      .ps2c_in(ps2c_in),
      .tri_c(tri_c),
