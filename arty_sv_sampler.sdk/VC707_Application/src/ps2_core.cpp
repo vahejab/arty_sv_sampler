@@ -6,16 +6,93 @@
  * @author p chu
  * @version v1.0: initial release
  ********************************************************************/
+//#define XPAR_IOMODULE_SINGLE_BASEADDR 0xC0000000
+//#define XPAR_IOMODULE_SINGLE_HIGHADDR 0xC00000FF
 
 
+///#define XPAR_GPIO_0_BASEADDR 0x80000000
+//#/define XPAR_GPIO_0_HIGHADDR 0x800000FF
+//#define XPAR_GPIO_0_DEVICE_ID 0
+//#define XGPIO_0_CHANNEL 1// GPIO port For Custom Interface
+//#define XGPIO_DIRECTION_IN 1 //input
+//#define XGPIO_DIRECTION_OUT 0 //output
+//#define XPAR_GPIO_0_INTERRUPT_PRESENT 0
+//#define XPAR_GPIO_0_IS_DUAL 0
+
+//#define XPAR_MICROBLAZE_0_AXI_INTC_BASEADDR 0x80000000
+//#define XPAR_MICROBLAZE_0_AXI_INTC_DEVICE_ID 0
+//#define INTERRUPT_ID 0
+#define XPAR_INTC_MAX_NUM_INTR_INPUTS 1
+#include "xparameters.h"
+#include "xil_exception.h"
+#include "xiomodule.h"
 #include "ps2_core.h"
+/*
+#include "xgpio.c"
+#include "xgpio.h"
+#include "xgpio_sinit.c"
+#include "xgpio_i.h"
+#include "xgpio_g.c"
+#include "xgpio_extra.c"
+#include "xgpio_intr.c"
 
-
+*/
 Ps2Core::Ps2Core(uint32_t core_base_addr) {
    base_addr = core_base_addr;
+   setUpInterrupt();
 }
 
 Ps2Core::~Ps2Core() {
+}
+
+void Ps2Core::enqueue(unsigned char value) {
+	if ((tail + 1) % QUEUE_SIZE == head) {
+	// queue is full, do nothing
+	return;
+	}
+	queue[tail] = value;
+	queueCount++;
+	tail = (tail + 1) % QUEUE_SIZE;
+}
+
+unsigned char Ps2Core::dequeue(void) {
+	if (head == tail) {
+	// queue is empty, do nothing
+	return 0;
+	}
+	unsigned char value = queue[head];
+	queueCount--;
+	head = (head + 1) % QUEUE_SIZE;
+	return value;
+}
+
+void Ps2Core::handleInterrupt(Ps2Core *ps2) {
+    uint8_t byte;
+    byte = ps2->rx_byte();
+    ps2->enqueue(byte);
+}
+
+void Ps2Core::checkInterruptStatus(Ps2Core *ps2) {
+	/* Read the status of the interrupt */
+	u32 IntrStatus = XIOModule_DiscreteRead(&ps2->intr, XIN_IOMODULE_EXTERNAL_INTERRUPT_INTR); // read counts (channel 1)(GpioPtr);
+
+	if (IntrStatus) {
+		Ps2Core::handleInterrupt(ps2);
+		//XIOModule_DiscreteWrite(&ps2->gpo, XGPIO_0_CHANNEL, 0); // clear gpi
+	}
+}
+
+void Ps2Core::setUpInterrupt(){
+    //Higher level Interface, interrupt support
+	//XGpio_Initialize(&Gpio, XPAR_GPIO_0_DEVICE_ID);
+	//XGpio_SetDataDirection(&Gpio, XGPIO_0_CHANNEL, XGPIO_DIRECTION_IN);
+
+	//Low Level Interface
+	XIOModule_Initialize(&intr, XPAR_IOMODULE_0_DEVICE_ID);
+
+	microblaze_register_handler(XIOModule_DeviceInterruptHandler, XPAR_IOMODULE_0_DEVICE_ID);
+	XIOModule_Connect(&intr, XIN_IOMODULE_EXTERNAL_INTERRUPT_INTR, (XInterruptHandler)checkInterruptStatus, this);
+	XIOModule_Enable(&intr, XIN_IOMODULE_EXTERNAL_INTERRUPT_INTR);
 }
 
 int Ps2Core::rx_fifo_empty() {
@@ -83,7 +160,7 @@ int Ps2Core::hex(dir direction = dir::SEND, int num = 0)
 int Ps2Core::init() {
    /* Flush fifo buffer */
    while(!rx_fifo_empty()) {
-	   hex(dir::RECV, rx_byte());
+	  rx_byte();
    }
    hex(dir::SEND, tx_byte(0xFF));  //Reset Mouse
    sleep_ms(200);
@@ -120,28 +197,25 @@ int Ps2Core::init() {
    hex(dir::SEND, tx_byte(0xF4));  //Enable Data Reporting
    sleep_ms(200);
    if (hex(dir::RECV, rx_byte()) != 0xFA) return -10;
-   //		if(hex(dir::RECV, rx_byte()) == -1) //Empty Response
-   //			return 2; //Then likely the mouse is already streaming packets
+   //XIOModule_DiscreteWrite(&gpo, XGPIO_0_CHANNEL, 1); // enable gpi
+   microblaze_enable_interrupts(); // enable global interrupts
    return (2);  //Mouse Detected and Initialized Successfully
 }
 int Ps2Core::get_mouse_activity(int *lbtn, int *rbtn, int *xmov,
-      int *ymov) {
-   uint8_t b1, b2, b3;
+      int *ymov, int *zmov) {
+   uint8_t b1, b2, b3, b4;
 
    uint32_t tmp;
 
-   /* check and retrieve 1st byte */
-   while (rx_fifo_empty())
-	   ;
-   b1 = rx_byte();
-   /* wait and retrieve 2nd byte */
-   while (rx_fifo_empty())
-      ;
-   b2 = rx_byte();
-   /* wait and retrieve 3rd byte */
-   while (rx_fifo_empty())
-      ;
-   b3 = rx_byte();
+   /* retrieve bytes only if 4 or a multiple of 4 exist in queue */
+   if (queueCount >= 4) {
+	   b1 = dequeue();
+	   b2 = dequeue();
+	   b3 = dequeue();
+	   b4 = dequeue();
+   }
+   else
+	   return (0);
    /* extract button info */
    *lbtn = (int) (b1 & 0x01);      // extract bit 0
    *rbtn = (int) (b1 & 0x02) >> 1; // extract bit 1
@@ -153,8 +227,12 @@ int Ps2Core::get_mouse_activity(int *lbtn, int *rbtn, int *xmov,
    /* extract y movement; manually convert 9-bit 2's comp to int */
    tmp = (uint32_t) b3;
    if (b1 & 0x20)                // check MSB (sign bit) of y movement
-      tmp = tmp | 0xffffff00;     // manual sign-extension if negative
+      tmp = tmp | 0xffffff00;    // manual sign-extension if negative
    *ymov = (int) tmp;            // data conversion
+   tmp = (uint32_t) b4;
+   if (b4 & 0x08)               // check MSB (sign bit) of z movement
+      tmp = tmp | 0xfffffff0;   // manual sign-extension if negative
+   *zmov = (int) tmp;           // data conversion
    /* success */
    return (1);
 }

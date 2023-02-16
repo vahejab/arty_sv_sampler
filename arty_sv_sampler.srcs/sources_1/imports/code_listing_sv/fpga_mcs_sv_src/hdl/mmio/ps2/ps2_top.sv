@@ -14,6 +14,7 @@ module ps2_top
       (* dont_touch = "true" *)output logic ps2c_out,
       (* dont_touch = "true" *)output logic ps2d_out,
       (* dont_touch = "true" *)output logic rx_done_tick,
+      (* dont_touch = "true" *)output logic rx_done_pulse,
       (* dont_touch = "true" *)input  wire ps2d_in,
       (* dont_touch = "true" *)input  wire ps2c_in
    );
@@ -48,6 +49,7 @@ module ps2_top
       .rx_en(tx_idle), 
       .rx_idle(rx_idle), 
       .rx_done_tick(rx_done_tick), 
+      .rx_done_pulse(rx_done_pulse),
       .dout(rx_data)
       );
 

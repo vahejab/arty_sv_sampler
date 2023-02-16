@@ -11,8 +11,9 @@
  * @author p chu
  * @version v1.0: initial release
  *********************************************************************/
-
+#define XGPIO_0_CHANNEL 1 /* GPIO port For Custom Interface */
 #include "chu_init.h"
+//#include "xgpio.h"
 #include "ps2_core.h"
 
 /**
@@ -30,7 +31,7 @@ void uart_check() {
 
 void ps2_check(Ps2Core *ps2_p) {
 	int id;
-	int lbtn, rbtn, xmov, ymov;
+	int lbtn, rbtn, xmov, ymov, zmov;
 	//static int x = 0, y = 0;
 	char ch;
 	unsigned long last;
@@ -42,8 +43,9 @@ void ps2_check(Ps2Core *ps2_p) {
 	last = now_ms();
 	if (id == 1 || id == 2) {
 		do {
+			//Ps2Core::checkInterruptStatus(ps2_p);
 			if (id == 2) {  // mouse
-				if (ps2_p->get_mouse_activity(&lbtn, &rbtn, &xmov, &ymov)) {
+				if (ps2_p->get_mouse_activity(&lbtn, &rbtn, &xmov, &ymov, &zmov)) {
                     //uart.disp("\033c");  //clear screen
 					uart.disp("[");
 					uart.disp(lbtn);
@@ -54,8 +56,8 @@ void ps2_check(Ps2Core *ps2_p) {
 					uart.disp(", ");
 					uart.disp(ymov);
 					uart.disp("] \r\n");
-					last = now_ms();
 				}   // end get_mouse_activitiy()
+				last = now_ms();
 			} else {
 				if (ps2_p->get_kb_ch(&ch)) {
 					uart.disp(ch);
@@ -67,12 +69,12 @@ void ps2_check(Ps2Core *ps2_p) {
 		} while (now_ms() - last < 5000);
 	}
 	uart.disp("\n\rExit PS2 test \n\r");
-
 }
 
 Ps2Core ps2(get_slot_addr(BRIDGE_BASE, S2_PS2));
 
 int main() {
+	//XIOModule_DiscreteWrite(&ps2.gpo, XGPIO_0_CHANNEL, 0); // disable writes to the gpi register by writing 0 to gpo
 	while (1) {
 		uart_check();
 		ps2_check(&ps2);

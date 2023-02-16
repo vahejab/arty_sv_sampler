@@ -6,7 +6,7 @@ module reg_file
    )
    (
     input  logic clk,
-    input  logic wr_en,
+    input  logic wr_en, rd,
     input  logic [ADDR_WIDTH-1:0] w_addr, r_addr,
     input  logic [DATA_WIDTH-1:0] w_data,
     output logic [DATA_WIDTH-1:0] r_data
@@ -14,7 +14,7 @@ module reg_file
 
    // signal declaration
    logic [DATA_WIDTH-1:0] array_reg [0:2**ADDR_WIDTH-1];
-
+   
    // body
    // write operation
    always_ff @(posedge clk)

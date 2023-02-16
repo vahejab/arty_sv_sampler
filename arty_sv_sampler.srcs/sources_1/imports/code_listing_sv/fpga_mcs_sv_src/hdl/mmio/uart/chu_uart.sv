@@ -22,7 +22,7 @@ module chu_uart
    );
 
    // signal declaration
-   logic wr_uart, rd_uart, wr_dvsr ;
+   logic wr_uart, rd_uart, wr_dvsr;
    logic tx_full, rx_empty;
    logic [10:0] dvsr_reg;
    wire [7:0] r_data;

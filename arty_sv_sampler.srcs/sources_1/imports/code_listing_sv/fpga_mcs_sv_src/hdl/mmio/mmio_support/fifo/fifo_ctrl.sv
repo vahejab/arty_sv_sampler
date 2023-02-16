@@ -19,7 +19,7 @@ module fifo_ctrl
    // body
    // fifo control logic
    // logicisters for status and read and write pointers
-   always_ff @(posedge clk, posedge reset)
+   always_ff @(posedge clk/*, posedge reset*/)
    begin
       if (reset)
          begin

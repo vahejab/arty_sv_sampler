@@ -11,7 +11,8 @@ module chu_ps2_core
       (* dont_touch = "true" *)input  logic [W_SIZE-1:0] addr,
       (* dont_touch = "true" *)input  logic [31:0] wr_data,
       (* dont_touch = "true" *)output logic [31:0] rd_data,
-      
+      (* dont_touch = "true" *)output logic rx_done_tick,
+      (* dont_touch = "true" *)output logic rx_done_pulse,
       (* dont_touch = "true" *)output logic tri_c, tri_d, ps2c_out, ps2d_out,
       
     // external ports    
@@ -21,9 +22,9 @@ module chu_ps2_core
 
    // declaration
    logic [7:0] ps2_rx_data;
-   logic rd_fifo, ps2_rx_buf_empty;
+   logic rd_fifo, ps2_rx_buf_empty, ps2_rx_empty_reg;
    logic wr_ps2, ps2_tx_idle;
-   logic ps2_rx_idle;;
+   logic ps2_rx_idle;
 
    // body
    // instantiate PS2 controller   
@@ -36,7 +37,8 @@ module chu_ps2_core
        .ps2_rx_data(ps2_rx_data), 
        .ps2_tx_idle(ps2_tx_idle),
        .ps2_rx_idle(ps2_rx_idle), 
-       .ps2_rx_buf_empty(ps2_rx_buf_empty), 
+       .ps2_rx_buf_empty(ps2_rx_buf_empty),
+       .rx_done_pulse(rx_done_pulse), 
        .ps2d_in(ps2d_in), 
        .ps2c_in(ps2c_in), 
        .tri_c(tri_c), 
@@ -51,5 +53,9 @@ module chu_ps2_core
    // write data to PS2 transmitting subsystem  
    assign wr_ps2 = cs & write & (addr[1:0]==2'b10);
    //  read data multiplexing
-   assign rd_data = {22'b0, ps2_tx_idle, ps2_rx_buf_empty, ps2_rx_data}; 
+   //always @(posedge clk)
+   //begin
+   //     rd_data <= {22'b0, ps2_tx_idle, ps2_rx_buf_empty, ((!ps2_rx_buf_empty)? ps2_rx_data: 8'b0)}; 
+   //end
+   assign rd_data = {22'b0, ps2_tx_idle, ps2_rx_buf_empty, ps2_rx_data};
 endmodule  
