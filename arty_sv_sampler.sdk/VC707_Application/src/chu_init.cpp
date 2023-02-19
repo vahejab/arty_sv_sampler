@@ -20,6 +20,8 @@
  *  - time slot is 0
  *  - uart slot is 1
  *********************************************************************/
+// if SYS_CLK is 200 then the use 1000 cycles for 1 s
+// if SYS_CLK is 100 then use 500 cycles for 1 s
 
 TimerCore _sys_timer(get_slot_addr(BRIDGE_BASE, TIMER_SLOT));
 UartCore uart(get_slot_addr(BRIDGE_BASE, UART_SLOT));
@@ -31,7 +33,7 @@ unsigned long now_us() {
 
 // current system time in ms
 unsigned long now_ms() {
-   return ((unsigned long) _sys_timer.read_time() / 1000);
+   return ((unsigned long) _sys_timer.read_time() / 500);
 }
 
 // idle for t microseconds
@@ -41,7 +43,7 @@ void sleep_us(unsigned long int t) {
 
 // idle for t ms
 void sleep_ms(unsigned long int t) {
-   _sys_timer.sleep(uint64_t(1000 * t));
+   _sys_timer.sleep(uint64_t(500 * t));
 }
 
 // debug asserted

@@ -11,9 +11,9 @@
  * @author p chu
  * @version v1.0: initial release
  *********************************************************************/
-#define XGPIO_0_CHANNEL 1 /* GPIO port For Custom Interface */
+#define _DEBUG
+//#define XGPIO_0_CHANNEL 1 /* GPIO port For Custom Interface */
 #include "chu_init.h"
-//#include "xgpio.h"
 #include "ps2_core.h"
 
 /**
@@ -30,7 +30,7 @@ void uart_check() {
 }
 
 void ps2_check(Ps2Core *ps2_p) {
-	int id;
+	int id = 0;
 	int lbtn, rbtn, xmov, ymov, zmov;
 	//static int x = 0, y = 0;
 	char ch;
@@ -38,26 +38,28 @@ void ps2_check(Ps2Core *ps2_p) {
 
 	uart.disp("\n\rPS2 device (1-keyboard / 2-mouse): \n\r");
 	id = ps2_p->init();
+	ps2_p->setUpInterrupt();
 	uart.disp(id);
 	uart.disp("\n\r");
 	last = now_ms();
 	if (id == 1 || id == 2) {
 		do {
-			//Ps2Core::checkInterruptStatus(ps2_p);
+			ps2_p->checkInterruptStatus();
 			if (id == 2) {  // mouse
 				if (ps2_p->get_mouse_activity(&lbtn, &rbtn, &xmov, &ymov, &zmov)) {
-                    //uart.disp("\033c");  //clear screen
-					uart.disp("[");
-					uart.disp(lbtn);
-					uart.disp(", ");
-					uart.disp(rbtn);
-					uart.disp(", ");
-					uart.disp(xmov);
-					uart.disp(", ");
-					uart.disp(ymov);
-					uart.disp("] \r\n");
+                    if (lbtn || rbtn || xmov || ymov || zmov) {
+						uart.disp("[");
+						uart.disp(lbtn);
+						uart.disp(", ");
+						uart.disp(rbtn);
+						uart.disp(", ");
+						uart.disp(xmov);
+						uart.disp(", ");
+						uart.disp(ymov);
+						uart.disp("] \r\n");
+                    }
+					last = now_ms();
 				}   // end get_mouse_activitiy()
-				last = now_ms();
 			} else {
 				if (ps2_p->get_kb_ch(&ch)) {
 					uart.disp(ch);
@@ -66,11 +68,10 @@ void ps2_check(Ps2Core *ps2_p) {
 				} // end get_kb_ch()
 			}  // end id==1
 
-		} while (now_ms() - last < 5000);
+		} while (now_ms() - last < 5000 || ps2_p > 0);
 	}
 	uart.disp("\n\rExit PS2 test \n\r");
 }
-
 Ps2Core ps2(get_slot_addr(BRIDGE_BASE, S2_PS2));
 
 int main() {

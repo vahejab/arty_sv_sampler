@@ -61,20 +61,14 @@ module ps2rx
    
    always_ff @(posedge clk)
    begin
-        if (rx_done_tick)
-        begin
-            rx_done_count <= 1;
-            rx_done_pulse <= 1;
-        end
-        if (rx_done_pulse == 1 && rx_done_count < 3)
-        begin
+        if (rx_done_count != 0)
             rx_done_count <= rx_done_count + 1;
-        end
-        else if (rx_done_count == 3)
+
+        if (rx_done_tick == 1)
         begin
-            rx_done_count <= 0;
-            rx_done_pulse <= 0;
+                rx_done_count <= 1;
         end
+        rx_done_pulse <= rx_done_count != 0;
     end
 
    // next-state logic

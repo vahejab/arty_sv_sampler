@@ -62,7 +62,7 @@ module ps2_top
         .probe4(ps2_rx_buf_empty), //empty
         .probe5(full) //full
     );*/
-
+    
    // instantiate FIFO buffer
    fifo #(.DATA_WIDTH(8), .ADDR_WIDTH(W_SIZE)) fifo_unit
       (.clk(clk), .reset(reset), .rd(rd_ps2_packet),
@@ -70,5 +70,5 @@ module ps2_top
        .full(full), .r_data(ps2_rx_data));
    //output 
    assign ps2_tx_idle = tx_idle;
-   assign psr_rx_idle = rx_idle;
+   assign ps2_rx_idle = rx_idle;
 endmodule

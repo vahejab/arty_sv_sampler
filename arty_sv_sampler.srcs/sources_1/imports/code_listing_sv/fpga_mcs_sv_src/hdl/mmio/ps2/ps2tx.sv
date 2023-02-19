@@ -22,12 +22,13 @@ module ps2tx
    logic f_ps2c_next;
    logic [3:0] n_reg, n_next;
    logic [8:0] b_reg, b_next;
-   logic [14:0] c_reg, c_next;
+   logic [15:0] c_reg, c_next;
    logic [12:0] d_reg, d_next;
    logic par, fall_edge;
 
 
-	   // body
+
+   // body
    //*****************************************************************
    // filter and falling-edge tick generation for ps2c
    //*****************************************************************
@@ -57,12 +58,13 @@ module ps2tx
    begin
       if (reset) begin
          state_reg <= idle;
-         c_reg <= 0;
+         c_reg <= 0; //delay immediate processing for 200us after reset to allow for time to receive signal
          d_reg <= 0;
          n_reg <= 0;
          b_reg <= 0;
       end
       else begin
+                 
          state_reg <= state_next;
          c_reg <= c_next;
          d_reg <= d_next;
@@ -85,13 +87,12 @@ module ps2tx
       ps2d_out = 1'b1;
       tri_c = 1'b0;
       tri_d = 1'b0;
-      tx_idle = 1'b0;
+      tx_idle = 1'b1;
       case (state_reg)
          idle: begin
-            tx_idle = 1'b1;
             if (wr_ps2) begin
                b_next = {par, din};
-               c_next = 15'h2710; // 10000 in hex equivalent to 100us
+               c_next = 16'h2710; // 10000 in hex equivalent to 100us
                state_next = waitr;
             end
          end
@@ -101,6 +102,7 @@ module ps2tx
          rts: begin  // request to send
             ps2c_out = 1'b0;
             tri_c = 1'b1;
+            tx_idle = 1'b0;
             c_next = c_reg - 1;
             if (c_reg==0)
             begin
@@ -111,6 +113,7 @@ module ps2tx
             tri_c = 1'b0;
             ps2d_out = 1'b0;
             tri_d = 1'b1;
+            tx_idle = 1'b0;
             if (fall_edge)
             begin
                n_next = 4'h8;
@@ -120,6 +123,7 @@ module ps2tx
          data: begin  //  8 data + 1 parity        
             ps2d_out = b_reg[0];
             tri_d = 1'b1;
+            tx_idle = 1'b0;
             if (fall_edge) begin
                b_next = {1'b0, b_reg[8:1]};
                if (n_reg == 0)
@@ -128,11 +132,14 @@ module ps2tx
                   n_next = n_reg - 1;
             end
          end
-         stop:   // assume floating high for ps2d
-            if (fall_edge) begin
-              state_next = idle;
-              tx_done_tick = 1'b1;
-           end
+         stop: begin  // assume floating high for ps2d
+                tri_d = 1'b1;
+                tx_idle = 1'b0;
+                if (fall_edge) begin
+                  state_next = idle;
+                  tx_done_tick = 1'b1;
+                end
+         end
       endcase
    end
    // tristate buffers

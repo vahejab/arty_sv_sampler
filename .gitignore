@@ -22,7 +22,7 @@ arty_sv_sampler.runs
 arty_sv_sampler.hls
 arty_sv_sampler.ip_user_files
 arty_sv_sampler.ipdefs
-VC707_Test_Board_Support_Package
+VC707_Board_Support_Package
 VC707_Test_Platform
 .metadata
 sim_1

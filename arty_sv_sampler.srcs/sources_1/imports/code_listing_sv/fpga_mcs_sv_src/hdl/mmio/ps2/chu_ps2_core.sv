@@ -53,9 +53,10 @@ module chu_ps2_core
    // write data to PS2 transmitting subsystem  
    assign wr_ps2 = cs & write & (addr[1:0]==2'b10);
    //  read data multiplexing
-   //always @(posedge clk)
-   //begin
-   //     rd_data <= {22'b0, ps2_tx_idle, ps2_rx_buf_empty, ((!ps2_rx_buf_empty)? ps2_rx_data: 8'b0)}; 
-   //end
+   /*always @(posedge clk)
+   begin
+       if (read)
+         rd_data <= {22'b0, ps2_tx_idle, ps2_rx_buf_empty, ((!ps2_rx_buf_empty)? ps2_rx_data: 8'b0)}; 
+   end*/
    assign rd_data = {22'b0, ps2_tx_idle, ps2_rx_buf_empty, ps2_rx_data};
 endmodule  

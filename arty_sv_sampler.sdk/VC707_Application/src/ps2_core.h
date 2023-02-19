@@ -11,11 +11,13 @@
 #ifndef _PS2_H_INCLUDED
 #define _PS2_H_INCLUDED
 
-#define  QUEUE_SIZE 256
+#define QUEUE_SIZE 256
 
-#include "chu_init.h"
-//#include "xgpio.h"
+#include "xparameters.h"
+#include "xgpio.h"
 #include "xiomodule.h"
+#include "chu_init.h"
+
 /**
  * ps2 core driver
  *  - transmit/receive raw byte stream to/from MMIO timer core.
@@ -28,11 +30,10 @@
 
 class Ps2Core {
 	public:
-
-     	//XGpio Gpio;  /* The instance of the GPIO device */
-        XIOModule intr;
-        //XIOModule gpo;
-		//static XIntc InterruptController; /* Instance of the Interrupt Controller */
+    	XIOModule io;
+    	// Define the GPIO instance and pointer
+    	XGpio Gpio;
+    	XGpio* GpioPtr = &Gpio;
 
 		unsigned int queueCount = 0;
 		/**
@@ -73,9 +74,11 @@ class Ps2Core {
 
 	   void enqueue(unsigned char value);
 	   unsigned char dequeue(void);
-	   static void checkInterruptStatus(Ps2Core *ps2);
+	   void checkInterruptStatus();
+	   static void interruptHandler(Ps2Core *ps2);
 	   static void handleInterrupt(Ps2Core *ps2);
-	   static void MyInterruptFlagSet(Ps2Core *ps2);
+	   static void clearInterrupt(Ps2Core *ps2);
+
 	   /**
 		* setup Interrupt
 		*/
