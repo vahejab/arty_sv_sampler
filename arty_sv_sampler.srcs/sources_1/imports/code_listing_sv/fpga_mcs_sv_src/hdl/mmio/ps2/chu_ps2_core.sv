@@ -11,8 +11,6 @@ module chu_ps2_core
       (* dont_touch = "true" *)input  logic [W_SIZE-1:0] addr,
       (* dont_touch = "true" *)input  logic [31:0] wr_data,
       (* dont_touch = "true" *)output logic [31:0] rd_data,
-      (* dont_touch = "true" *)output logic rx_done_tick,
-      (* dont_touch = "true" *)output logic rx_done_pulse,
       (* dont_touch = "true" *)output logic tri_c, tri_d, ps2c_out, ps2d_out,
       
     // external ports    
@@ -38,7 +36,6 @@ module chu_ps2_core
        .ps2_tx_idle(ps2_tx_idle),
        .ps2_rx_idle(ps2_rx_idle), 
        .ps2_rx_buf_empty(ps2_rx_buf_empty),
-       .rx_done_pulse(rx_done_pulse), 
        .ps2d_in(ps2d_in), 
        .ps2c_in(ps2c_in), 
        .tri_c(tri_c), 

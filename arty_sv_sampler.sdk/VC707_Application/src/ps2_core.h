@@ -16,6 +16,7 @@
 #include "xparameters.h"
 #include "xgpio.h"
 #include "xiomodule.h"
+//#include "xintc.h"
 #include "chu_init.h"
 
 /**
@@ -30,10 +31,11 @@
 
 class Ps2Core {
 	public:
+	    //XIntc intc;
     	XIOModule io;
     	// Define the GPIO instance and pointer
-    	XGpio Gpio;
-    	XGpio* GpioPtr = &Gpio;
+    	//XGpio Gpio;
+    	//XGpio* GpioPtr = &Gpio;
 
 		unsigned int queueCount = 0;
 		/**
@@ -74,15 +76,10 @@ class Ps2Core {
 
 	   void enqueue(unsigned char value);
 	   unsigned char dequeue(void);
-	   void checkInterruptStatus();
-	   static void interruptHandler(Ps2Core *ps2);
-	   static void handleInterrupt(Ps2Core *ps2);
-	   static void clearInterrupt(Ps2Core *ps2);
+	   void checkMovement();
+	   void getPacket();
+	   void getMovementPackets();
 
-	   /**
-		* setup Interrupt
-		*/
-	   void setUpInterrupt();
 
 	   /**
 		* check whether the ps2 receiver fifo is empty

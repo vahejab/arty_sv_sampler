@@ -14,7 +14,6 @@ module mmio_sys_sampler_arty_a7
      (* dont_touch = "true" *) input   logic [20:0] mmio_addr, 
      (* dont_touch = "true" *) input   logic [31:0] mmio_wr_data,
      (* dont_touch = "true" *) output  logic [31:0] mmio_rd_data,
-     (* dont_touch = "true" *) output  logic rx_done_pulse,
    // uart
      (* dont_touch = "true" *) input logic rx,
      (* dont_touch = "true" *) output logic tx, 
@@ -79,7 +78,6 @@ module mmio_sys_sampler_arty_a7
      .addr(reg_addr_array[`S2_PS2]),
      .rd_data(rd_data_array[`S2_PS2]),
      .wr_data(wr_data_array[`S2_PS2]),
-     .rx_done_pulse(rx_done_pulse),
      .ps2d_in(ps2d_in),
      .ps2c_in(ps2c_in),
      .tri_c(tri_c),

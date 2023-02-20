@@ -38,26 +38,28 @@ void ps2_check(Ps2Core *ps2_p) {
 
 	uart.disp("\n\rPS2 device (1-keyboard / 2-mouse): \n\r");
 	id = ps2_p->init();
-	ps2_p->setUpInterrupt();
+	//ps2_p->setUpInterrupt();
 	uart.disp(id);
 	uart.disp("\n\r");
 	last = now_ms();
 	if (id == 1 || id == 2) {
 		do {
-			ps2_p->checkInterruptStatus();
+			ps2_p->checkMovement();
 			if (id == 2) {  // mouse
 				if (ps2_p->get_mouse_activity(&lbtn, &rbtn, &xmov, &ymov, &zmov)) {
-                    if (lbtn || rbtn || xmov || ymov || zmov) {
-						uart.disp("[");
-						uart.disp(lbtn);
-						uart.disp(", ");
-						uart.disp(rbtn);
-						uart.disp(", ");
-						uart.disp(xmov);
-						uart.disp(", ");
-						uart.disp(ymov);
-						uart.disp("] \r\n");
-                    }
+                    //if (lbtn || rbtn || xmov || ymov || zmov) {
+					uart.disp("[");
+					uart.disp(lbtn);
+					uart.disp(", ");
+					uart.disp(rbtn);
+					uart.disp(", ");
+					uart.disp(xmov);
+					uart.disp(", ");
+					uart.disp(ymov);
+					uart.disp(", ");
+					uart.disp(zmov);
+					uart.disp("] \r\n");
+                    //}
 					last = now_ms();
 				}   // end get_mouse_activitiy()
 			} else {

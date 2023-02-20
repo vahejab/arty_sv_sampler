@@ -13,8 +13,6 @@ module ps2_top
       (* dont_touch = "true" *)output logic tri_d,
       (* dont_touch = "true" *)output logic ps2c_out,
       (* dont_touch = "true" *)output logic ps2d_out,
-      (* dont_touch = "true" *)output logic rx_done_tick,
-      (* dont_touch = "true" *)output logic rx_done_pulse,
       (* dont_touch = "true" *)input  wire ps2d_in,
       (* dont_touch = "true" *)input  wire ps2c_in
    );
@@ -23,6 +21,8 @@ module ps2_top
    logic rx_idle, tx_idle;
    logic [7:0] rx_data;
    logic full;
+   logic rx_done_tick;
+   
    // body
    // instantiate ps2 transmitter
    ps2tx ps2_tx_unit
@@ -49,20 +49,9 @@ module ps2_top
       .rx_en(tx_idle), 
       .rx_idle(rx_idle), 
       .rx_done_tick(rx_done_tick), 
-      .rx_done_pulse(rx_done_pulse),
       .dout(rx_data)
       );
 
-   /* ila_0 ila (
-        .clk(clk),
-        .probe0(rd_ps2_packet), //rd
-        .probe1(ps2_rx_data), //read
-        .probe2(rx_done_tick),//wr
-        .probe3(rx_data),  //write
-        .probe4(ps2_rx_buf_empty), //empty
-        .probe5(full) //full
-    );*/
-    
    // instantiate FIFO buffer
    fifo #(.DATA_WIDTH(8), .ADDR_WIDTH(W_SIZE)) fifo_unit
       (.clk(clk), .reset(reset), .rd(rd_ps2_packet),

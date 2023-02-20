@@ -3,7 +3,7 @@ module ps2rx
       (* dont_touch = "true" *)input  logic clk, reset, rx_en,
       (* dont_touch = "true" *) input wire ps2d_in, 
       (* dont_touch = "true" *) input wire ps2c_in, 
-      (* dont_touch = "true" *)output logic rx_idle, rx_done_tick, rx_done_pulse,
+      (* dont_touch = "true" *)output logic rx_idle, rx_done_tick,
       (* dont_touch = "true" *)output logic [7:0] dout
    );
 
@@ -19,7 +19,6 @@ module ps2rx
    logic [3:0] n_reg, n_next;
    logic [10:0] b_reg, b_next;
    logic fall_edge;
-   logic [1:0] rx_done_count = 0;
 
    // body
    //*****************************************************************
@@ -58,18 +57,6 @@ module ps2rx
          b_reg <= b_next;
       end
    end
-   
-   always_ff @(posedge clk)
-   begin
-        if (rx_done_count != 0)
-            rx_done_count <= rx_done_count + 1;
-
-        if (rx_done_tick == 1)
-        begin
-                rx_done_count <= 1;
-        end
-        rx_done_pulse <= rx_done_count != 0;
-    end
 
    // next-state logic
    always_comb

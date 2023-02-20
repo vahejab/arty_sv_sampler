@@ -11,8 +11,8 @@ set_property PACKAGE_PIN Y40 [get_ports ps2d]
 set_property PULLUP true [get_ports ps2d]
 set_property IOSTANDARD LVCMOS18 [get_ports ps2d]
 #Mouse Module Loopback
-set_property PACKAGE_PIN W40 [get_ports interrupt]
-set_property IOSTANDARD LVCMOS18 [get_ports interrupt]
+#set_property PACKAGE_PIN W40 [get_ports interrupt]
+#set_property IOSTANDARD LVCMOS18 [get_ports interrupt]
 
 ##PS2 Clock
 #System Module

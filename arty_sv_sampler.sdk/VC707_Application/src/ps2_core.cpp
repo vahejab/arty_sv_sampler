@@ -6,36 +6,29 @@
  * @author p chu
  * @version v1.0: initial release
  ********************************************************************/
+#define XPAR_XGPIO_NUM_INSTANCES 1
 
 #include "xparameters.h"
 //#include "microblaze_exception_handler.c"
 #include "xil_exception.c"
 #include "mb_interface.h"
 #include "xil_assert.c"
-#include "xgpio_intr.c"
+//#include "xintc_g.c"
+/*#include "xgpio_intr.c"
 #include "xgpio_extra.c"
 #include "xgpio_g.c"
 #include "xgpio_sinit.c"
-#include "xgpio.c"
+#include "xgpio.c"*/
 #include "ps2_core.h"
 
 // Define the address of the interrupt control register for the MicroBlaze processor
 #define XPAR_AXI_GPIO_0_DEVICE_ID 0
+#define INTC_DEVICE_ID 0
 
+#define INTERRUPT_CONTROL_REG XPAR_IOMODULE_SINGLE_BASEADDR + XIN_ISR_OFFSET
 
-/*
-#include "xgpio.c"
-#include "xgpio.h"
-#include "xgpio_sinit.c"
-#include "xgpio_i.h"
-#include "xgpio_g.c"
-#include "xgpio_extra.c"
-#include "xgpio_intr.c"
-
-*/
 Ps2Core::Ps2Core(uint32_t core_base_addr) {
    base_addr = core_base_addr;
-   setUpInterrupt();
 }
 
 Ps2Core::~Ps2Core() {
@@ -62,73 +55,29 @@ unsigned char Ps2Core::dequeue(void) {
 	return value;
 }
 
-void Ps2Core::handleInterrupt(Ps2Core *ps2) {
+void Ps2Core::getPacket() {
     uint8_t byte;
-    byte = ps2->rx_byte();
-    ps2->enqueue(byte);
+    byte = rx_byte();
+    enqueue(byte);
 }
 
-void Ps2Core::checkInterruptStatus() {
-	Ps2Core::interruptHandler(this);
+void Ps2Core::checkMovement() {
+	Ps2Core::getMovementPackets();
 }
 
-void Ps2Core::interruptHandler(Ps2Core * ps2)  {
-	/* Read the status of the interrupt */
-	//u32 IntrStatus = XIOModule_DiscreteRead(&ps2->io, INTERRUPT_CONTROL_REG);
-	// Check the GPIO pin for changes
-    u32 gpioValue = XGpio_DiscreteRead(ps2->GpioPtr, 1);
-	if (gpioValue != 0) {
-		Ps2Core::handleInterrupt(ps2);
-		Ps2Core::clearInterrupt(ps2);
-    }
-}
-
-void Ps2Core::clearInterrupt(Ps2Core *ps2) {
-	XGpio_DiscreteWrite(ps2->GpioPtr, 1, 0);
-	//XGpio_InterruptClear(ps2->GpioPtr, XGPIO_IR_CH1_MASK);
-}
-
-
-void Ps2Core::setUpInterrupt(){
-	#ifdef MICROBLAZE_EXCEPTIONS_ENABLED
-	Xil_ExceptionInit();
-	microblaze_register_handler(XIOModule_DeviceInterruptHandler, XPAR_IOMODULE_0_DEVICE_ID);
-	Xil_ExceptionRegisterHandler(XIL_EXCEPTION_ID_INT, (Xil_ExceptionHandler)Ps2Core::interruptHandler, this);
-	// Set the priority level for the interrupt exception
-	Xil_ExceptionEnable();
-	#endif
-	#ifdef MICROBLAZE_EXCEPTIONS_ENABLED_IOMODULE
-	microblaze_register_handler(XIOModule_DeviceInterruptHandler, XPAR_IOMODULE_0_DEVICE_ID);
-	XIOModule_Initialize(&io, XPAR_IOMODULE_0_DEVICE_ID);
-	XIOModule_Connect(&io, XIN_IOMODULE_EXTERNAL_INTERRUPT_INTR, (XInterruptHandler)Ps2Core::interruptHandler, this);
-	XIOModule_Start(&io);
-    enable_interrupts();
-	#endif
-	Xil_ExceptionInit();
-	int Status = XGpio_Initialize(GpioPtr, XPAR_AXI_GPIO_0_DEVICE_ID);
-	if (Status != XST_SUCCESS) {
-		// Handle initialization error
-	}
-    XGpio_Config config;
-    config.DeviceId = XPAR_AXI_GPIO_0_DEVICE_ID;
-    config.InterruptPresent = true;
-    config.IsDual = false;
-    config.BaseAddress = XPAR_IOMODULE_0_IO_BASEADDR;
-	XGpio_CfgInitialize(GpioPtr, &config, config.BaseAddress);
-	// Set the direction of the GPIO pin (assumes input)
-	XGpio_SetDataDirection(GpioPtr, 1, 0xFFFFFFFF);
-
-
-
-	//XIOModule_Initialize(&io, XPAR_IOMODULE_0_DEVICE_ID);
-	//XIOModule_Connect(&io, XIN_IOMODULE_EXTERNAL_INTERRUPT_INTR, (XInterruptHandler)Ps2Core::interruptHandler, this);
-	//XIOModule_Start(&io);
-
-	// Register the exception handler
-	//Xil_ExceptionRegisterHandler(XIL_EXCEPTION_ID_INT, (Xil_ExceptionHandler)Ps2Core::interruptHandler, this);
-
-	// Enable exceptions
-	Xil_ExceptionEnable();
+void Ps2Core::getMovementPackets()  {
+	while(rx_fifo_empty())
+		;
+	Ps2Core::getPacket();
+    while(rx_fifo_empty())
+    	;
+	Ps2Core::getPacket();
+	while(rx_fifo_empty())
+		;
+	Ps2Core::getPacket();
+	while(rx_fifo_empty())
+		;
+	Ps2Core::getPacket();
 }
 
 int Ps2Core::rx_fifo_empty() {
@@ -250,8 +199,15 @@ int Ps2Core::get_mouse_activity(int *lbtn, int *rbtn, int *xmov,
 	   b3 = dequeue();
 	   b4 = dequeue();
    }
-   else
+   else {
+	   *lbtn = 0;
+	   *rbtn = 0;
+	   *rbtn = 0;
+	   *ymov = 0;
+	   *zmov = 0;
 	   return (0);
+   }
+
    /* extract button info */
    *lbtn = (int) (b1 & 0x01);      // extract bit 0
    *rbtn = (int) (b1 & 0x02) >> 1; // extract bit 1

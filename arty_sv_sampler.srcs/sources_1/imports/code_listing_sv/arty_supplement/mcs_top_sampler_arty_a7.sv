@@ -12,8 +12,7 @@ module mcs_top_heat_arty_a7
        (* dont_touch = "true" *)  input wire   ps2c_in,
        (* dont_touch = "true" *)  input wire   ps2d_in,
        (* dont_touch = "true" *)  output logic ps2c_out,
-       (* dont_touch = "true" *)  output logic ps2d_out,   
-       (* dont_touch = "true" *)  output logic interrupt   
+       (* dont_touch = "true" *)  output logic ps2d_out
     );
     
        // declaration
@@ -35,15 +34,7 @@ module mcs_top_heat_arty_a7
        logic [20:0] fp_addr;       
        logic [31:0] fp_wr_data;    
        logic [31:0] fp_rd_data; 
-       //interrupt signals
-       logic s_axi_aclk;
-       logic s_axi_aresetn;
-       logic [1:0] processor_ack;
-       logic ps2_interrupt;
-       logic [0:0] intc_interrupt;
-       logic intc_irq;
-      
-       assign interrupt = ps2_interrupt;
+
        
        //instantiate uBlaze MCS
        cpu cpu_unit (
@@ -56,11 +47,7 @@ module mcs_top_heat_arty_a7
         .IO_read_strobe(io_read_strobe),    
         .IO_ready(io_ready),                
         .IO_write_data(io_write_data),      
-        .IO_write_strobe(io_write_strobe),
-        .GPIO1_tri_i(ps2_interrupt),
-        //.GPIO1_tri_o(irq_en)
-        .INTC_Interrupt(ps2_interrupt) //in
-        //.INTC_IRQ(intc_irq)  //out
+        .IO_write_strobe(io_write_strobe)
         );
 
        // instantiate bridge
@@ -80,41 +67,7 @@ module mcs_top_heat_arty_a7
                  .fp_addr(fp_addr), 
                  .fp_wr_data(fp_wr_data), 
                  .fp_rd_data(fp_rd_data));
-        
        
-       /*axi_gpio_0 gpio(
-        .s_axi_awaddr(0),
-        .s_axi_awvalid(0),
-        .s_axi_wdata(0),
-        .s_axi_wvalid(0),
-        .s_axi_bready(0),
-        .s_axi_araddr(0),
-        .s_axi_arvalid(0),
-        .s_axi_rready(0),
-        .s_axi_wstrb(0),
-        .s_axi_aclk (clk_100M),
-        .s_axi_aresetn(~reset),
-        .gpio_io_i(interrupt),
-        //.ip2intc_irpt(intc_interrupt),
-        .gpio_io_t(irq)
-       );*/
-     /*
-        axi_intc_0 intc(
-        .s_axi_awaddr(0),
-        .s_axi_awvalid(0),
-        .s_axi_wdata(0),
-        .s_axi_wvalid(0),
-        .s_axi_bready(0),
-        .s_axi_araddr(0),
-        .s_axi_arvalid(0),
-        .s_axi_rready(0),
-        .s_axi_wstrb(0),
-        .s_axi_aclk (clk_100M),
-        .s_axi_aresetn(~reset),
-        .intr(ps2_interrupt),
-        .irq(interrupt)
-       );
-       */
        // instantiated i/o subsystem
        mmio_sys_sampler_arty_a7  mmio_unit (
         .clk(clk_100M),
@@ -125,7 +78,6 @@ module mcs_top_heat_arty_a7
         .mmio_addr(fp_addr), 
         .mmio_wr_data(fp_wr_data),
         .mmio_rd_data(fp_rd_data),
-        .rx_done_pulse(ps2_interrupt),
         .ps2d_in(ps2d_in),
         .ps2c_in(ps2c_in),
         .tri_c(tri_c),
