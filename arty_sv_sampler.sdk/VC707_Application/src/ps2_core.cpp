@@ -57,19 +57,13 @@ unsigned char Ps2Core::dequeue(void) {
 
 void Ps2Core::getPacket() {
     uint8_t byte;
- 	while (rx_fifo_empty())
-        ;
-    //if first byte is available (bit 3 should be non zero always)
-    if (queueCount % 4 == 0){
-    	byte = rx_byte();
-		if (byte != 0)
-			enqueue(byte);
-    }
-    while (queueCount % 4 != 0) {
-    	while (rx_fifo_empty())
-    		;
+    int bytesProcessed = 0;
+    while (bytesProcessed < 4) {
         byte = rx_byte();
-    	enqueue(byte);
+        if (byte != 0) {
+        	enqueue(byte);
+        	bytesProcessed++;
+        }
     }
 }
 
@@ -150,12 +144,11 @@ int Ps2Core::init() {
 		   break;
    }
    hex(dir::SEND, tx_byte(0xFF));  //Reset Mouse
-   while(rx_fifo_empty());
+   sleep_ms(300);
    if (hex(dir::RECV, rx_byte()) != 0xFA) return -1;//Check response (Acknowledge)
-   while(rx_fifo_empty());
    //Receive Remaining two packets, without checking values
    hex(dir::RECV, rx_byte());//0xAA (Basic Assurance Test)
-   while(rx_fifo_empty());
+   sleep_ms(100);
    hex(dir::RECV, rx_byte());//0x00 (Mouse ID)
    sleep_ms(100);
    hex(dir::SEND, tx_byte(0xF3)); //Set Sample Rate
@@ -187,11 +180,6 @@ int Ps2Core::init() {
    sleep_ms(100);
    if (hex(dir::RECV, rx_byte()) != 0xFA) return -10;
    sleep_ms(100);
-   /*while(!rx_fifo_empty()){
-	   sleep_ms(100);
-	   if(!rx_byte())
-		   break;
-   }*/
    return (2);  //Mouse Detected and Initialized Successfully
 }
 int Ps2Core::get_mouse_activity(int *lbtn, int *rbtn, int *xmov,

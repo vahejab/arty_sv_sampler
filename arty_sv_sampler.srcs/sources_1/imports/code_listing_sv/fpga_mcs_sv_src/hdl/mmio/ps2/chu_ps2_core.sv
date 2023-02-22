@@ -23,6 +23,7 @@ module chu_ps2_core
    logic rd_fifo, ps2_rx_buf_empty, ps2_rx_empty_reg;
    logic wr_ps2, ps2_tx_idle;
    logic ps2_rx_idle;
+   logic rm_rd_fifo;
 
    // body
    // instantiate PS2 controller   
@@ -46,10 +47,13 @@ module chu_ps2_core
 
    // decoding and read multiplexing
    // remove an item from FIFO  
-   assign rd_fifo = cs & read & (addr[1:0]==2'b11);
+   assign rd_fifo = cs & read & (addr[1:0]==2'b00);
    // write data to PS2 transmitting subsystem  
    assign wr_ps2 = cs & write & (addr[1:0]==2'b10);
+   assign rm_rd_fifo = cs & write & (addr[1:0]==2'b11);
    //  read data multiplexing
-   assign rd_data = {22'b0, ps2_tx_idle, ps2_rx_buf_empty, ps2_rx_data};
-  
+   always @(posedge clk)
+   begin
+       rd_data <= {22'b0, ps2_tx_idle, ps2_rx_buf_empty, (rd_fifo)? ps2_rx_data: (rm_rd_fifo)? wr_data[7:0]: rd_data[7:0]};
+   end
 endmodule  

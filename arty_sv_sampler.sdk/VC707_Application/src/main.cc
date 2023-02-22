@@ -81,6 +81,7 @@ int main() {
 	while (1) {
 		uart_check();
 		ps2_check(&ps2);
+		sleep_ms(2000);
 	} //while
 	return 0;
 } //main
