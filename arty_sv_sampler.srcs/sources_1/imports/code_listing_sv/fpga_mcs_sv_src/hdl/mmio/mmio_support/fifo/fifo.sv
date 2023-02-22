@@ -2,7 +2,8 @@
 module fifo
    #(
     parameter DATA_WIDTH=8, // number of bits in a word
-              ADDR_WIDTH=4  // number of address bits
+              ADDR_WIDTH=4,  // number of address bits
+              PS2_MODE=0
    )
    (
     input  logic clk, reset,
@@ -22,11 +23,11 @@ module fifo
    assign full = full_tmp;
    
    // instantiate fifo control unit
-   fifo_ctrl #(.ADDR_WIDTH(ADDR_WIDTH)) c_unit
+   fifo_ctrl #(.ADDR_WIDTH(ADDR_WIDTH), .PS2_MODE(PS2_MODE)) c_unit
       (.*, .full(full_tmp));
 
    // instantiate register file
    reg_file 
-      #(.DATA_WIDTH(DATA_WIDTH), .ADDR_WIDTH(ADDR_WIDTH)) f_unit (.*);
+      #(.DATA_WIDTH(DATA_WIDTH), .ADDR_WIDTH(ADDR_WIDTH), .PS2_MODE(PS2_MODE)) f_unit (.*);
 endmodule
 

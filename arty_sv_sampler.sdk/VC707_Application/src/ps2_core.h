@@ -14,8 +14,8 @@
 #define QUEUE_SIZE 256
 
 #include "xparameters.h"
-#include "xgpio.h"
-#include "xiomodule.h"
+//#include "xgpio.h"
+//#include "xiomodule.h"
 //#include "xintc.h"
 #include "chu_init.h"
 
@@ -32,7 +32,7 @@
 class Ps2Core {
 	public:
 	    //XIntc intc;
-    	XIOModule io;
+    	//XIOModule io;
     	// Define the GPIO instance and pointer
     	//XGpio Gpio;
     	//XGpio* GpioPtr = &Gpio;
@@ -78,7 +78,7 @@ class Ps2Core {
 	   unsigned char dequeue(void);
 	   void checkMovement();
 	   void getPacket();
-	   void getMovementPackets();
+	   void getMovementPacket();
 
 
 	   /**

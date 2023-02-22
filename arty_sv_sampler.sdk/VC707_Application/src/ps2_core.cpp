@@ -57,26 +57,27 @@ unsigned char Ps2Core::dequeue(void) {
 
 void Ps2Core::getPacket() {
     uint8_t byte;
-    byte = rx_byte();
-    enqueue(byte);
+ 	while (rx_fifo_empty())
+        ;
+    //if first byte is available (bit 3 should be non zero always)
+    if (queueCount % 4 == 0){
+    	byte = rx_byte();
+		if (byte != 0)
+			enqueue(byte);
+    }
+    while (queueCount % 4 != 0) {
+    	while (rx_fifo_empty())
+    		;
+        byte = rx_byte();
+    	enqueue(byte);
+    }
 }
 
 void Ps2Core::checkMovement() {
-	Ps2Core::getMovementPackets();
+	Ps2Core::getMovementPacket();
 }
 
-void Ps2Core::getMovementPackets()  {
-	while(rx_fifo_empty())
-		;
-	Ps2Core::getPacket();
-    while(rx_fifo_empty())
-    	;
-	Ps2Core::getPacket();
-	while(rx_fifo_empty())
-		;
-	Ps2Core::getPacket();
-	while(rx_fifo_empty())
-		;
+void Ps2Core::getMovementPacket()  {
 	Ps2Core::getPacket();
 }
 
@@ -145,15 +146,18 @@ int Ps2Core::hex(dir direction = dir::SEND, int num = 0)
 int Ps2Core::init() {
    /* Flush fifo buffer */
    while(!rx_fifo_empty()) {
-	  rx_byte();
+	   if (!rx_byte())
+		   break;
    }
    hex(dir::SEND, tx_byte(0xFF));  //Reset Mouse
-   sleep_ms(2000);
+   while(rx_fifo_empty());
    if (hex(dir::RECV, rx_byte()) != 0xFA) return -1;//Check response (Acknowledge)
-   sleep_ms(200);
+   while(rx_fifo_empty());
    //Receive Remaining two packets, without checking values
    hex(dir::RECV, rx_byte());//0xAA (Basic Assurance Test)
+   while(rx_fifo_empty());
    hex(dir::RECV, rx_byte());//0x00 (Mouse ID)
+   sleep_ms(100);
    hex(dir::SEND, tx_byte(0xF3)); //Set Sample Rate
    sleep_ms(100);
    if (hex(dir::RECV, rx_byte()) != 0xFA) return -2;
@@ -182,8 +186,12 @@ int Ps2Core::init() {
    hex(dir::SEND, tx_byte(0xF4));  //Enable Data Reporting
    sleep_ms(100);
    if (hex(dir::RECV, rx_byte()) != 0xFA) return -10;
-
-   //XIOModule_DiscreteWrite(&gpo, XGPIO_0_CHANNEL, 1); // enable gpi
+   sleep_ms(100);
+   /*while(!rx_fifo_empty()){
+	   sleep_ms(100);
+	   if(!rx_byte())
+		   break;
+   }*/
    return (2);  //Mouse Detected and Initialized Successfully
 }
 int Ps2Core::get_mouse_activity(int *lbtn, int *rbtn, int *xmov,
@@ -193,7 +201,7 @@ int Ps2Core::get_mouse_activity(int *lbtn, int *rbtn, int *xmov,
    uint32_t tmp;
 
    /* retrieve bytes only if 4 or a multiple of 4 exist in queue */
-   if (queueCount >= 4) {
+   if (queueCount % 4 == 0) {
 	   b1 = dequeue();
 	   b2 = dequeue();
 	   b3 = dequeue();
@@ -202,7 +210,7 @@ int Ps2Core::get_mouse_activity(int *lbtn, int *rbtn, int *xmov,
    else {
 	   *lbtn = 0;
 	   *rbtn = 0;
-	   *rbtn = 0;
+	   *xmov = 0;
 	   *ymov = 0;
 	   *zmov = 0;
 	   return (0);

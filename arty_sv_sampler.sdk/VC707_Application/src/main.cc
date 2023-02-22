@@ -31,14 +31,13 @@ void uart_check() {
 
 void ps2_check(Ps2Core *ps2_p) {
 	int id = 0;
-	int lbtn, rbtn, xmov, ymov, zmov;
+	int lbtn = 0, rbtn = 0, xmov = 0, ymov = 0, zmov = 0;
 	//static int x = 0, y = 0;
 	char ch;
 	unsigned long last;
 
 	uart.disp("\n\rPS2 device (1-keyboard / 2-mouse): \n\r");
 	id = ps2_p->init();
-	//ps2_p->setUpInterrupt();
 	uart.disp(id);
 	uart.disp("\n\r");
 	last = now_ms();
@@ -47,19 +46,20 @@ void ps2_check(Ps2Core *ps2_p) {
 			ps2_p->checkMovement();
 			if (id == 2) {  // mouse
 				if (ps2_p->get_mouse_activity(&lbtn, &rbtn, &xmov, &ymov, &zmov)) {
-                    //if (lbtn || rbtn || xmov || ymov || zmov) {
-					uart.disp("[");
-					uart.disp(lbtn);
-					uart.disp(", ");
-					uart.disp(rbtn);
-					uart.disp(", ");
-					uart.disp(xmov);
-					uart.disp(", ");
-					uart.disp(ymov);
-					uart.disp(", ");
-					uart.disp(zmov);
-					uart.disp("] \r\n");
-                    //}
+                    if (lbtn || rbtn || xmov || ymov || zmov) {
+						uart.disp("[");
+						uart.disp(lbtn);
+						uart.disp(", ");
+						uart.disp(rbtn);
+						uart.disp(", ");
+						uart.disp(xmov);
+						uart.disp(", ");
+						uart.disp(ymov);
+						uart.disp(", ");
+						uart.disp(zmov);
+						uart.disp("] \r\n");
+						lbtn = 0, rbtn = 0, xmov = 0, ymov = 0, zmov = 0;
+                    }
 					last = now_ms();
 				}   // end get_mouse_activitiy()
 			} else {
@@ -70,7 +70,7 @@ void ps2_check(Ps2Core *ps2_p) {
 				} // end get_kb_ch()
 			}  // end id==1
 
-		} while (now_ms() - last < 5000 || ps2_p > 0);
+		} while (now_ms() - last < 5000 || id > 0);
 	}
 	uart.disp("\n\rExit PS2 test \n\r");
 }
