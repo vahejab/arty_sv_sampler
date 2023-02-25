@@ -67,7 +67,7 @@ Design Hierarchy
 		</li>
 	    </ul>
 	</ul>
-</ul>\
+</ul>
 
 File Descriptions
 -------------------
