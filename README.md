@@ -8,39 +8,40 @@ Hardware Components
 
 This project requires the following hardware components:
 
-*   [VC707 FPGA board](https://www.xilinx.com/products/boards-and-kits/ek-v7-vc707-g.html)
-*   [Digilent FMC-CE adapter](https://store.digilentinc.com/fmc-ce-adapter-breaks-out-fmc-connectors-for-easier-access/)
-*   [Digilent PMOD-BB](https://store.digilentinc.com/pmod-breadboard-adapter/)
-*   [PCA9306 level-shifter](https://www.ti.com/product/PCA9306)
-*   [Kensington Expert Mouse](https://us.kensington.com/products/input-devices/trackballs/expert-mouse-wired-trackball)
-*   [PS/2 mouse 4-byte packet protocol](https://isdaman.com/alsos/hardware/mouse/ps2interface.htm)
+<ul>
+   <li><a href="https://www.xilinx.com/products/boards-and-kits/ek-v7-vc707-g.html" target="_new">VC707 FPGA board</a></li>
+   <li><a href="https://digilent.com/reference/fmc_ce_card/fmc_ce_card/" target="_new">Digilent FMC-CE adapter</a></li>
+   <li><a href="https://digilent.com/reference/pmod/pmodbb/" target="_new">Digilent PMOD-BB</a></li>
+   <li><a href="https://www.sparkfun.com/products/12009" target="_new">SparkFun PCA9306 level-shifter</a></li>
+   <li><a href="https://www.kensington.com/p/products/electronic-control-solutions/trackball-products/expert-mouse-wired-trackball/" target="_new">Kensington Expert Mouse</a></li>
+</ul>
 
 Design Hierarchy
 -------------------
 
 <ul>
-    <li>📄 <a href="https://github.com/vahejab/arty_sv_sampler/blob/main/arty_sv_sampler.srcs/sim_1/new/top.v">top.v</a> (1)
+    <li>📄 <a href="https://github.com/vahejab/arty_sv_sampler/blob/main/arty_sv_sampler.srcs/sim_1/imports/new/top.v">top.v</a> (1)
     <ul>
-        <li>📄 <a href="https://github.com/vahejab/arty_sv_sampler/blob/main/arty_sv_sampler.srcs/sources_1/imports/code_listing_sv/arty_supplement/mcs_top_sampler_arty_a7.sv">mcs_top_sampler_a7.sv</a> (3)
+        <li>📄 <a href="https://github.com/vahejab/arty_sv_sampler/blob/main/arty_sv_sampler.srcs/sources_1/imports/code_listing_sv/arty_supplement/mcs_top_sampler_arty_a7.sv</a> (3)
         <ul>
             <li>📄 cpu_unit : <a href="https://github.com/vahejab/arty_sv_sampler/blob/main/arty_sv_sampler.srcs/sources_1/imports/code_listing_sv/fpga_mcs_sv_src/hdl/cpu/cpu.v">cpu.v</a></li>
-            <li>📄 b_unit : <a href="https://github.com/vahejab/arty_sv_sampler/blob/main/arty_sv_sampler.srcs/sources_1/imports/code_listing_sv/fpga_mcs_sv_src/hdl/chu/chu_mcs_bridge.sv">chu_mcs_bridge.sv</a></li>
+            <li>📄 b_unit : <a href="https://github.com/vahejab/arty_sv_sampler/blob/main/arty_sv_sampler.srcs/sources_1/imports/code_listing_sv/fpga_mcs_sv_src/hdl/sys/bridge/chu_mcs_bridge.sv">chu_mcs_bridge.sv</a></li>
             <li>📄 mmio_unit : <a href="https://github.com/vahejab/arty_sv_sampler/blob/main/arty_sv_sampler.srcs/sources_1/imports/code_listing_sv/arty_supplement/mmio_sys_sampler_arty_a7.sv">mmio_sys_sampler_arty_a7.sv</a> (4)
             <ul>
-                <li>📄 b_unit : <a href="https://github.com/vahejab/arty_sv_sampler/blob/main/arty_sv_sampler.srcs/sources_1/imports/code_listing_sv/fpga_mcs_sv_src/hdl/chu/chu_mmio_controller.sv">chu_mmio_controller.sv</a></li>
+                <li>📄 b_unit : <a href="https://github.com/vahejab/arty_sv_sampler/blob/main/arty_sv_sampler.srcs/sources_1/imports/code_listing_sv/fpga_mcs_sv_src/hdl/mmio/mmio_support/chu_mmio_controller.sv">chu_mmio_controller.sv</a></li>
                 <li>📄 ctrl_unit : chu_mmio_controller (chu_mmio_controller.sv)</li>
-                <li>📄 uart_slotl : <a href="https://github.com/vahejab/arty_sv_sampler/blob/main/arty_sv_sampler.srcs/sources_1/imports/code_listing_sv/fpga_mcs_sv_src/hdl/chu/chu_uart.sv">chu_uart.sv</a> (1)
+                <li>📄 uart_slotl : <a href="https://github.com/vahejab/arty_sv_sampler/blob/main/arty_sv_sampler.srcs/sources_1/imports/code_listing_sv/fpga_mcs_sv_src/hdl/mmio/uart/chu_uart.sv">chu_uart.sv</a> (1)
                     <ul>
-                        <li>📄 uart_unit : <a href="https://github.com/vahejab/arty_sv_sampler/blob/main/arty_sv_sampler.srcs/sources_1/imports/code_listing_sv/fpga_mcs_sv_src/hdl/uart/uart.sv">uart.sv</a> (5)
+                        <li>📄 uart_unit : <a href="https://github.com/vahejab/arty_sv_sampler/blob/main/arty_sv_sampler.srcs/sources_1/imports/code_listing_sv/fpga_mcs_sv_src/hdl/uart/mmio/uart.sv">uart.sv</a> (5)
                             <ul>
-                                <li>📄 baud_gen_unit : <a href="https://github.com/vahejab/arty_sv_sampler/blob/main/arty_sv_sampler.srcs/sources_1/imports/code_listing_sv/fpga_mcs_sv_src/hdl/uart/baud_gen.sv">baud_gen.sv</a></li>
-                                <li>📄 uart_rx_unit : <a href="https://github.com/vahejab/arty_sv_sampler/blob/main/arty_sv_sampler.srcs/sources_1/imports/code_listing_sv/fpga_mcs_sv_src/hdl/uart/uart_rx.sv">uart_rx.sv</a></li>
-                                <li>📄 uart_tx_unit : <a href="https://github.com/vahejab/arty_sv_sampler/blob/main/arty_sv_sampler.srcs/sources_1/imports/code_listing_sv/fpga_mcs_sv_src/hdl/uart/uart_tx.sv">uart_tx.sv</a></li>
+                                <li>📄 baud_gen_unit : <a href="https://github.com/vahejab/arty_sv_sampler/blob/main/arty_sv_sampler.srcs/sources_1/imports/code_listing_sv/fpga_mcs_sv_src/hdl/mmio/uart/baud_gen.sv">baud_gen.sv</a></li>
+                                <li>📄 uart_rx_unit : <a href="https://github.com/vahejab/arty_sv_sampler/blob/main/arty_sv_sampler.srcs/sources_1/imports/code_listing_sv/fpga_mcs_sv_src/hdl/mmio/uart/uart_rx.sv">uart_rx.sv</a></li>
+                                <li>📄 uart_tx_unit : <a href="https://github.com/vahejab/arty_sv_sampler/blob/main/arty_sv_sampler.srcs/sources_1/imports/code_listing_sv/fpga_mcs_sv_src/hdl/mmio/uart/uart_tx.sv">uart_tx.sv</a></li>
                                 <ul>
-                                    <li>📄 fifo_rx_unit : <a href="https://github.com/vahejab/arty_sv_sampler/blob/main/arty_sv_sampler.srcs/imports/fifo.sv">fifo.sv</a></li>
+                                    <li>📄 fifo_rx_unit : <a href="https://github.com/vahejab/arty_sv_sampler/blob/main/arty_sv_sampler.srcs/sources_1/imports/code_listing_sv/fpga_mcs_sv_src/hdl/mmio/mmio_support/fifo/fifo_ctrl.sv">fifo.sv</a></li>
                                     <ul>
-                                        <li>📄 c_unit : <a href="https://github.com/vahejab/arty_sv_sampler/blob/main/arty_sv_sampler.srcs/imports/fifo_ctrl.sv">fifo_ctrl.sv</a> </li>
-                                        <li>📄 f_unit : <a href="https://github.com/vahejab/arty_sv_sampler/blob/main/arty_sv_sampler.srcs/imports/reg_file.sv">reg_file.sv</a> </li>
+                                        <li>📄 c_unit : <a href="https://github.com/vahejab/arty_sv_sampler/blob/mainarty_sv_sampler.srcs/sources_1/imports/code_listing_sv/fpga_mcs_sv_src/hdl/mmio/mmio_support/fifo/fifo_ctrl.sv">fifo_ctrl.sv</a> </li>
+                                        <li>📄 f_unit : <a href="https://github.com/vahejab/arty_sv_sampler/blob/main/arty_sv_sampler.srcs/sources_1/imports/code_listing_sv/fpga_mcs_sv_src/hdl/mmio/mmio_support/fifo/reg_file.sv">reg_file.sv</a> </li>
                                     </ul>
                                 </ul>
                             </ul>
@@ -49,10 +50,10 @@ Design Hierarchy
                 </li>
                 <li>📄 ps2_slot2 : <a href="https://github.com/vahejab/arty_sv_sampler/blob/main/arty_sv_sampler.srcs/sources_1/imports/code_listing_sv/fpga_mcs_sv_src/hdl/mmio/ps2/chu_ps2_core.sv">chu_ps2_core (chu_ps2_core.sv)</a> (1)
                     <ul>
-                        <li>📄 ps2_unit : <a href="https://github.com/vahejab/arty_sv_sampler/blob/main/arty_sv_sampler.srcs/sources_1/imports/code_listing_sv/fpga_mcs_sv_src/hdl/ps2/ps2_top.sv">ps2_top (ps2_top.sv)</a> (3)
+                        <li>📄 ps2_unit : <a href="https://github.com/vahejab/arty_sv_sampler/blob/main/arty_sv_sampler.srcs/sources_1/imports/code_listing_sv/fpga_mcs_sv_src/hdl/mmio/ps2/ps2_top.sv">ps2_top (ps2_top.sv)</a> (2)
                             <ul>
-                                <li>📄 ps2_unit : <a href="https://github.com/vahejab/arty_sv_sampler/blob/main/arty_sv_sampler.srcs/sources_1/imports/code_listing_sv/fpga_mcs_sv_src/hdl/ps2/ps2tx.sv">ps2tx (ps2tx.sv)</a></li>
-                                <li>📄 ps2_rx_unit : <a href="https://github.com/vahejab/arty_sv_sampler/blob/main/arty_sv_sampler.srcs/sources_1/imports/code_listing_sv/fpga_mcs_sv_src/hdl/ps2/ps2rx.sv">ps2rx (ps2rx.sv)</a></li>
+                                <li>📄 ps2_unit : <a href="https://github.com/vahejab/arty_sv_sampler/blob/main/arty_sv_sampler.srcs/sources_1/imports/code_listing_sv/fpga_mcs_sv_src/hdl/mmio/ps2/ps2tx.sv">ps2tx (ps2tx.sv)</a></li>
+                                <li>📄 ps2_rx_unit : <a href="https://github.com/vahejab/arty_sv_sampler/blob/main/arty_sv_sampler.srcs/sources_1/imports/code_listing_sv/fpga_mcs_sv_src/hdl/mmio/ps2/ps2rx.sv">ps2rx (ps2rx.sv)</a></li>
                             </ul>
                         </li>
                         <li> 📄 fifo_unit : <a href="https://github.com/vahejab/arty_sv_sampler/blob/main/arty_sv_sampler.srcs/sources_1/imports/code_listing_sv/fpga_mcs_sv_src/hdl/mmio/mmio_support/fifo/fifo.sv">fifo (fifo.sv)</a> (2)
