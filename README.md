@@ -22,7 +22,7 @@ Design Hierarchy
 <ul>
     <li>📄 <a href="https://github.com/vahejab/arty_sv_sampler/blob/main/arty_sv_sampler.srcs/sim_1/imports/new/top.v">top.v</a> (1)
     <ul>
-        <li>📄 <a href="https://github.com/vahejab/arty_sv_sampler/blob/main/arty_sv_sampler.srcs/sources_1/imports/code_listing_sv/arty_supplement/mcs_top_sampler_arty_a7.sv</a> (3)
+        <li>📄 <a href="https://github.com/vahejab/arty_sv_sampler/blob/main/arty_sv_sampler.srcs/sources_1/imports/code_listing_sv/arty_supplement/mcs_top_sampler_arty_a7.sv">mcs_top_sampler_arty_a7.sv</a> (3)
         <ul>
             <li>📄 cpu_unit : <a href="https://github.com/vahejab/arty_sv_sampler/blob/main/arty_sv_sampler.srcs/sources_1/imports/code_listing_sv/fpga_mcs_sv_src/hdl/cpu/cpu.v">cpu.v</a></li>
             <li>📄 b_unit : <a href="https://github.com/vahejab/arty_sv_sampler/blob/main/arty_sv_sampler.srcs/sources_1/imports/code_listing_sv/fpga_mcs_sv_src/hdl/sys/bridge/chu_mcs_bridge.sv">chu_mcs_bridge.sv</a></li>
@@ -67,6 +67,40 @@ Design Hierarchy
         </li>
     </ul>
 </ul>
+
++ top.v: The top-level Verilog file for the design, which instantiates the CPU, MMIO, UART, and PS/2 modules.
+
++ cpu.v: The Verilog source file for the CPU, which contains the top-level logic for the design.
+
++ chu_mcs_bridge.sv: The Verilog source file for the memory controller subsystem (MCS) bridge module, which provides a bridge between the CPU and the memory controller subsystem.
+
+ + chu_mmio_controller.sv: The Verilog source file for the memory-mapped I/O (MMIO) controller, which provides an interface for controlling and communicating with peripheral devices.
+
++ mmio_sys_sampler_arty_a7.sv: The Verilog source file for the system sampler, which is a memory-mapped peripheral that provides an interface for sampling data from an ADC.
+
++ chu_uart.sv: The Verilog source file for the Universal Asynchronous Receiver/Transmitter (UART) slot logic, which handles the data communication over a serial interface.
+
++ uart.sv: The Verilog source file for the UART unit, which provides an interface for transmitting and receiving data over a serial connection.
+
++ baud_gen.sv: The Verilog source file for the baud rate generator unit, which generates the correct baud rate for the UART interface.
+
++ uart_rx.sv: The Verilog source file for the UART receiver unit, which receives data over a serial interface.
+
++ uart_tx.sv: The Verilog source file for the UART transmitter unit, which transmits data over a serial interface.
+
++ fifo.sv: The Verilog source file for the First-In-First-Out (FIFO) unit, which stores data in a buffer.
+
++ fifo_ctrl.sv: The Verilog source file for the FIFO control unit, which manages the read and write operations to the FIFO.
+
++ reg_file.sv: The Verilog source file for the register file unit, which stores the status of the peripheral devices.
+
++ chu_ps2_core.sv: The Verilog source file for the PS/2 slot logic, which handles the communication over a PS/2 interface.
+
++ ps2_top.sv: The Verilog source file for the PS/2 unit, which provides an interface for communicating with a PS/2 device.
+
++ ps2tx.sv: The Verilog source file for the PS/2 transmitter unit, which transmits data over a PS/2 interface.
+
++ ps2rx.sv: The Verilog source file for the PS/2 receiver unit, which receives data over a PS/2 interface.
               
 
 Additional Information
