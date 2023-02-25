@@ -24,6 +24,17 @@ arty_sv_sampler.ip_user_files
 arty_sv_sampler.ipdefs
 VC707_Board_Support_Package
 VC707_Test_Platform
+xadc_arty_a7
+asdr
+dffs
+debounce
+i2c
+led_mux
+pwm
+
+chu_gpo.v
+chu_gpi.v
+
 Packages
 synth
 imp
