@@ -140,8 +140,9 @@ int Ps2Core::hex(dir direction = dir::SEND, int num = 0)
 int Ps2Core::init() {
    /* Flush fifo buffer */
    while(!rx_fifo_empty()) {
-	   if (!rx_byte())
-		   break;
+	   //if (!rx_byte())
+	   //	break;
+	   rx_byte();
    }
    hex(dir::SEND, tx_byte(0xFF));  //Reset Mouse
    sleep_ms(300);
@@ -189,7 +190,7 @@ int Ps2Core::get_mouse_activity(int *lbtn, int *rbtn, int *xmov,
    uint32_t tmp;
 
    /* retrieve bytes only if 4 or a multiple of 4 exist in queue */
-   if (queueCount % 4 == 0) {
+   if (queueCount > 0 && queueCount % 4 == 0) {
 	   b1 = dequeue();
 	   b2 = dequeue();
 	   b3 = dequeue();
@@ -209,18 +210,24 @@ int Ps2Core::get_mouse_activity(int *lbtn, int *rbtn, int *xmov,
    *rbtn = (int) (b1 & 0x02) >> 1; // extract bit 1
    /* extract x movement; manually convert 9-bit 2's comp to int */
    tmp = (uint32_t) b2;
-   if (b1 & 0x10)                // check MSB (sign bit) of x movement
-      tmp = tmp | 0xffffff00;    // manual sign-extension if negative
-   *xmov = (int) tmp;            // data conversion
+   if (b1 & 0x10) {                // check MSB (sign bit) of x movement
+      tmp = tmp | 0xffffff00;      // manual sign-extension if negative
+      tmp = (tmp ^ ((1 << 8) - 1)) + 1;    // take the twos compliment
+   }
+   *xmov = tmp;            // data conversion
    /* extract y movement; manually convert 9-bit 2's comp to int */
    tmp = (uint32_t) b3;
-   if (b1 & 0x20)                // check MSB (sign bit) of y movement
-      tmp = tmp | 0xffffff00;    // manual sign-extension if negative
-   *ymov = (int) tmp;            // data conversion
+   if (b1 & 0x20) {                // check MSB (sign bit) of y movement
+      tmp = tmp | 0xffffff00;      // manual sign-extension if negative
+      tmp = (tmp ^ ((1 << 8) - 1)) + 1;
+   }
+   *ymov = tmp;            // data conversion
    tmp = (uint32_t) b4;
-   if (b4 & 0x08)               // check MSB (sign bit) of z movement
+   if (b4 & 0x10) {               // check MSB (sign bit) of z movement
       tmp = tmp | 0xfffffff0;   // manual sign-extension if negative
-   *zmov = (int) tmp;           // data conversion
+      tmp = (tmp ^ ((1 << 4) - 1)) + 1; //take the twos compliment
+   }
+   *zmov = tmp;           // data conversion
    /* success */
    return (1);
 }

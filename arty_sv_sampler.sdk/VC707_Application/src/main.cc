@@ -32,6 +32,7 @@ void uart_check() {
 void ps2_check(Ps2Core *ps2_p) {
 	int id = 0;
 	int lbtn = 0, rbtn = 0, xmov = 0, ymov = 0, zmov = 0;
+	int xpos = 0, ypos = 0, zpos = 0;
 	//static int x = 0, y = 0;
 	char ch;
 	unsigned long last;
@@ -47,16 +48,19 @@ void ps2_check(Ps2Core *ps2_p) {
 			if (id == 2) {  // mouse
 				if (ps2_p->get_mouse_activity(&lbtn, &rbtn, &xmov, &ymov, &zmov)) {
                     if (lbtn || rbtn || xmov || ymov || zmov) {
-						uart.disp("[");
+						xpos += xmov;
+						ypos += ymov;
+						zpos += zmov;
+                    	uart.disp("[");
 						uart.disp(lbtn);
 						uart.disp(", ");
 						uart.disp(rbtn);
 						uart.disp(", ");
-						uart.disp(xmov);
+						uart.disp(xpos);
 						uart.disp(", ");
-						uart.disp(ymov);
+						uart.disp(ypos);
 						uart.disp(", ");
-						uart.disp(zmov);
+						uart.disp(zpos);
 						uart.disp("] \r\n");
 						lbtn = 0, rbtn = 0, xmov = 0, ymov = 0, zmov = 0;
                     }
