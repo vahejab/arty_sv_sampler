@@ -1,9 +1,5 @@
 <h1 align="center">
-  <br>
-  <img src="https://user-images.githubusercontent.com/123456/123456789/demo.gif" alt="Arty SV Sampler demo" width="800">
-  <br>
   FPGA - GPU
-  <br>
 </h1>
 <h4 align="center">This project is a SystemVerilog module designed to work on the VC707 FPGA Board and will operate as a 3D Graphics Acceleration Unit. It currently sends mouse movement to a PC over UART.</h4>
 <p align="center">
@@ -46,7 +42,7 @@ Design Hierarchy
 			<li>📄 mmio_unit : <a href="https://github.com/vahejab/arty_sv_sampler/blob/main/arty_sv_sampler.srcs/sources_1/imports/code_listing_sv/arty_supplement/mmio_sys_sampler_arty_a7.sv">mmio_sys_sampler_arty_a7.sv</a> (4)</li>
 			<li>📄 uart_slotl : <a href="https://github.com/vahejab/arty_sv_sampler/blob/main/arty_sv_sampler.srcs/sources_1/imports/code_listing_sv/fpga_mcs_sv_src/hdl/mmio/uart/chu_uart.sv">chu_uart.sv</a> (1)
 			    <ul>
-				<li>📄 uart_unit : <a href="https://github.com/vahejab/arty_sv_sampler/blob/main/arty_sv_sampler.srcs/sources_1/imports/code_listing_sv/fpga_mcs_sv_src/hdl/uart/mmio/uart.sv">uart.sv</a> (5)
+				<li>📄 uart_unit : <a href="https://github.com/vahejab/arty_sv_sampler/blob/main/arty_sv_sampler.srcs/sources_1/imports/code_listing_sv/fpga_mcs_sv_src/hdl/uart/mmio/uart.sv">uart.sv</a> (6)
 				    <ul>
 					<li>📄 baud_gen_unit : <a href="https://github.com/vahejab/arty_sv_sampler/blob/main/arty_sv_sampler.srcs/sources_1/imports/code_listing_sv/fpga_mcs_sv_src/hdl/mmio/uart/baud_gen.sv">baud_gen.sv</a></li>
 					<li>📄 uart_rx_unit : <a href="https://github.com/vahejab/arty_sv_sampler/blob/main/arty_sv_sampler.srcs/sources_1/imports/code_listing_sv/fpga_mcs_sv_src/hdl/mmio/uart/uart_rx.sv">uart_rx.sv</a></li>
