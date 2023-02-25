@@ -76,7 +76,6 @@ For additional information on the PS/2 mouse 4-byte packet protocol, please refe
 
 For information on how to physically connect the components, please refer to the respective datasheets of the components and the reference manual of the Arty FPGA board.
 
-Sure, here is the revised README with the directory hierarchy, 4 byte packet information for PS/2 mouse, and the C++ files:
 
 FPGA - GPU
 ===============
