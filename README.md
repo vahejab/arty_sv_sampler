@@ -1,3 +1,18 @@
+<h1 align="center">
+  <br>
+  <img src="https://user-images.githubusercontent.com/123456/123456789/demo.gif" alt="Arty SV Sampler demo" width="800">
+  <br>
+  FPGA - GPU
+  <br>
+</h1>
+<h4 align="center">This project is a SystemVerilog module designed to work on the VC707 FPGA Board and will operate as a 3D Graphics Acceleration Unit. It currently sends mouse movement to a PC over UART.</h4>
+<p align="center">
+  <a href="#hardware-components">Hardware Components</a> •
+  <a href="#design-hierarchy">Design Hierarchy</a> •
+  <a href="#file-descriptions">File Descriptions</a> •
+  <a href="#additional-information">Additional Information</a>
+</p>
+
 FPGA - GPU
 ===============
 
@@ -6,7 +21,7 @@ This project is a SystemVerilog module designed to work on the VC707 FPGA Board 
 Hardware Components
 -------------------
 
-This project requires the following hardware components:
+This project uses the following hardware components:
 
 <ul>
    <li><a href="https://www.xilinx.com/products/boards-and-kits/ek-v7-vc707-g.html" target="_new">VC707 FPGA board</a></li>
