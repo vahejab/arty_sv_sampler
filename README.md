@@ -1,5 +1,5 @@
 <h1 align="center">
-  FPGA - GPU
+  fpgaPGA - Field Programmable Gate Array: Programmable Graphics Accelerator
 </h1>
 <h4 align="center">This project is a SystemVerilog module designed to work on the VC707 FPGA Board and will operate as a 3D Graphics Acceleration Unit. It currently sends mouse movement to a PC over UART.</h4>
 <p align="center">
