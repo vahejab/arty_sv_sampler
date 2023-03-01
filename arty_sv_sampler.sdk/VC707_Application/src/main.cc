@@ -34,7 +34,7 @@ void ps2_check(Ps2Core *ps2_p) {
 	int lbtn = 0, rbtn = 0, xmov = 0, ymov = 0, zmov = 0;
 	int xpos = 0, ypos = 0, zpos = 0;
 	//static int x = 0, y = 0;
-	char ch;
+
 	unsigned long last;
 
 	uart.disp("\n\rPS2 device (1-keyboard / 2-mouse): \n\r");
@@ -62,18 +62,10 @@ void ps2_check(Ps2Core *ps2_p) {
 						uart.disp(", ");
 						uart.disp(zpos);
 						uart.disp("] \r\n");
-						lbtn = 0, rbtn = 0, xmov = 0, ymov = 0, zmov = 0;
                     }
 					last = now_ms();
 				}   // end get_mouse_activitiy()
-			} else {
-				if (ps2_p->get_kb_ch(&ch)) {
-					uart.disp(ch);
-					uart.disp(" ");
-					last = now_ms();
-				} // end get_kb_ch()
-			}  // end id==1
-
+			}
 		} while (now_ms() - last < 5000 || id > 0);
 	}
 	uart.disp("\n\rExit PS2 test \n\r");
@@ -82,10 +74,14 @@ Ps2Core ps2(get_slot_addr(BRIDGE_BASE, S2_PS2));
 
 int main() {
 	//XIOModule_DiscreteWrite(&ps2.gpo, XGPIO_0_CHANNEL, 0); // disable writes to the gpi register by writing 0 to gpo
+	uint32_t data;
+	Ps2Core *ps2p = &ps2;
 	while (1) {
 		uart_check();
 		ps2_check(&ps2);
-		sleep_ms(2000);
+		uart.disp("Please Power Cycle Mouse..");
+		while ((data = ps2p->rx_word_from_byte()) == 0 && ps2p->byte(data) != 0xAA);
+		while ((data = ps2p->rx_word_from_byte()) == 0 && ps2p->byte(data) != 0x00);
 	} //while
 	return 0;
 } //main

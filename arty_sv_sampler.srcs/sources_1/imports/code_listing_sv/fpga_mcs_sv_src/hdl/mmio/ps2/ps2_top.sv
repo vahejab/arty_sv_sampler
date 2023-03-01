@@ -2,10 +2,11 @@
 module ps2_top
    #(parameter W_SIZE = 6)   // # address bits in FIFO buffer
    (
-      (* dont_touch = "true" *) input  logic clk, reset,
+      (* dont_touch = "true" *)input  logic clk, reset,
       (* dont_touch = "true" *)input  logic wr_ps2, rd_ps2_packet,
       (* dont_touch = "true" *)input  logic [7:0] ps2_tx_data,
       (* dont_touch = "true" *)output logic [7:0] ps2_rx_data,
+      (* dont_touch = "true" *)output logic rx_done_tick,
       (* dont_touch = "true" *)output logic ps2_tx_idle,
       (* dont_touch = "true" *)output logic ps2_rx_idle,
       (* dont_touch = "true" *)output logic ps2_rx_buf_empty,

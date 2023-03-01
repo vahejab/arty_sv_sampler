@@ -60,7 +60,7 @@ class Ps2Core {
 	   *
 	   */
 	   enum field{
-		TX_IDLE_FIELD = 0x00000200, /**< bit 9 of rd_data_reg; full bit  */
+		RX_IDLE_FIELD = 0x00000200, /**< bit 9 of rd_data_reg; idle bit  */
 		RX_EMPT_FIELD = 0x00000100, /**< bit 10 of rd_data_reg; empty bit */
 		RX_DATA_FIELD = 0x000000ff  /**< bits of 7..0 rd_data_reg; read data */
 	   };
@@ -74,12 +74,13 @@ class Ps2Core {
 	   Ps2Core(uint32_t core_base_addr);
 	   ~Ps2Core();       // not used
 
-	   void enqueue(unsigned char value);
-	   unsigned char dequeue(void);
+	   void enqueue(uint8_t value);
+	   uint8_t dequeue(void);
 	   void checkMovement();
-	   void getPacket();
-	   void getMovementPacket();
-
+	   int byte(uint32_t data);
+	   void getPackets();
+	   void getMovementPackets();
+	   void handleError(uint8_t *byteArray, uint8_t *lastSuccessfulPacket);
 
 	   /**
 		* check whether the ps2 receiver fifo is empty
@@ -87,15 +88,15 @@ class Ps2Core {
 		* @return 1: if empty; 0: otherwise
 		*
 		*/
-	   int rx_fifo_empty();
+	   int rx_fifo_empty(uint32_t rd_word);
 
 	   /**
-		* check whether the ps2 transmitter is idle
+		* check whether the ps2 receiver is idle
 		*
 		* @return 1: if idle; 0: otherwise
 		*
 		*/
-	   int tx_idle();
+	   int rx_idle(uint32_t rd_word);
 
 	   /**
 		* send an 8-bit command to ps2
@@ -111,6 +112,7 @@ class Ps2Core {
 		* @return  -1 if fifo is empty; fifo data otherwise
 		*
 		*/
+	   int rx_word_from_byte();
 	   int rx_byte();
 
 	   /**
@@ -138,18 +140,6 @@ class Ps2Core {
 		*
 		*/
 	   int get_mouse_activity(int *lbtn, int *rbtn, int *xmov, int *ymov, int *zmov);
-
-
-	   /**
-		* get keyboard activity
-		*
-		* @return 0: no new data; 1: with new data
-		* @return ch return ASCII code of the pressed key
-		*
-		* @note special codes returned for non-ASCII keys (F1, ESC etc.)
-		*/
-	   int get_kb_ch(char *ch);
-
 
 	   /**
 		* hex

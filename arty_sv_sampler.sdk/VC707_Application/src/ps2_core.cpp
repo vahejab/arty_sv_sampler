@@ -34,7 +34,7 @@ Ps2Core::Ps2Core(uint32_t core_base_addr) {
 Ps2Core::~Ps2Core() {
 }
 
-void Ps2Core::enqueue(unsigned char value) {
+void Ps2Core::enqueue(uint8_t value) {
 	if ((tail + 1) % QUEUE_SIZE == head) {
 	// queue is full, do nothing
 	return;
@@ -44,52 +44,150 @@ void Ps2Core::enqueue(unsigned char value) {
 	tail = (tail + 1) % QUEUE_SIZE;
 }
 
-unsigned char Ps2Core::dequeue(void) {
+uint8_t Ps2Core::dequeue(void) {
 	if (head == tail) {
 	// queue is empty, do nothing
 	return 0;
 	}
-	unsigned char value = queue[head];
+	uint8_t value = queue[head];
 	queueCount--;
 	head = (head + 1) % QUEUE_SIZE;
 	return value;
 }
 
-void Ps2Core::getPacket() {
-    uint8_t byte;
+int Ps2Core::byte(uint32_t data) {
+	return ((int) (data & RX_DATA_FIELD));
+}
+
+void Ps2Core::getPackets() {
+    int data = 0;
+    uint8_t byteArray[4] = {0x00, 0x00, 0x00, 0x00};
     int bytesProcessed = 0;
     while (bytesProcessed < 4) {
-        byte = rx_byte();
-        if (byte != 0) {
-        	enqueue(byte);
-        	bytesProcessed++;
+        if (bytesProcessed == 0 && (data = rx_word_from_byte()) != 0 && rx_idle(data) && (byte(data) & 0x08) == 0x08) {
+        	if ((data & 0xF0) == 0xF0 || (data & 0xC0) >= 0x40) {//error or overflow on at least one of x, y
+				bytesProcessed = 0;
+				for (int idx = 0; idx < 4; idx++) {
+					byteArray[idx] = 0x00;
+					//lastSuccessfulPacket[idx] = 0x00;
+				}
+				//tx_byte(0xFC);  // Clear Mouse Buffer
+				//tx_byte(0xF5);  // Disable Data Reporting
+				// Flush Host Buffer
+				while((data = rx_word_from_byte())  && byte(data) != 0)
+					;
+				//tx_byte(0xF4);  // Enable Data Reporting
+				continue;
+			}
+        	else {
+				byteArray[bytesProcessed++] = byte(data);
+        	}
+		}
+        else if (bytesProcessed  && (data = rx_word_from_byte()) != 0 && rx_idle(data)) {
+        	if ((bytesProcessed == 1 && (byte(data) & 0x80) >> 7 != (byteArray[0] & 0x10) >> 4) ||
+        	    (bytesProcessed == 2 && (byte(data) & 0x80) >> 7 != (byteArray[0] & 0x20) >> 5) ||
+        	    (bytesProcessed == 3 && ((byteArray[0] & 0x08) == 0x08) && byteArray[1] == 0x00 && byteArray[2] == 0x00 && (byte(data) == 0x00)) ||
+				(bytesProcessed == 3 && ((byteArray[0] & 0x08) == 0x08) && byteArray[1] == 0x00 && byteArray[2] == 0x00 && (byte(data) & 0x0F) == 0x08) ||
+				(bytesProcessed == 3 && (byte(data) & 0xC0) >= 0x40) ||
+				(byte(data) & 0xF0) == 0xF0)
+			    {//mismatch in sign, no data in x,y, or error (0xF0)
+			    bytesProcessed = 0;
+			    for (int idx = 0; idx < 4; idx++) {
+			    	byteArray[idx] = 0x00;
+			    	//lastSuccessfulPacket[idx] = 0x00;
+			    }
+				//tx_byte(0xFC);  // Clear Mouse Buffer
+				//tx_byte(0xF5);  // Disable Data Reporting
+				// Flush Host Buffer
+				while((data = rx_word_from_byte())  && byte(data) != 0)
+					;
+				//tx_byte(0xF4);  // Enable Data Reporting
+			    continue;
+        	}
+        	else {
+           		byteArray[bytesProcessed++] = byte(data);
+        	}
         }
     }
+    for (int idx = 0; idx < 4; idx++) {
+    	enqueue(byteArray[idx]);
+ 		hex(dir::RECV, byteArray[idx]);
+    	//lastSuccessfulPacket[idx] = byteArray[idx];
+    	byteArray[idx] = 0x00;
+    }
+    uart.disp((int)queueCount);
 }
 
 void Ps2Core::checkMovement() {
-	Ps2Core::getMovementPacket();
+	Ps2Core::getMovementPackets();
 }
 
-void Ps2Core::getMovementPacket()  {
-	Ps2Core::getPacket();
+void Ps2Core::getMovementPackets()  {
+	Ps2Core::getPackets();
 }
 
-int Ps2Core::rx_fifo_empty() {
-   uint32_t rd_word;
-   int empty;
+void Ps2Core::handleError(uint8_t *byteArray, uint8_t *lastSuccessfulPacket) {
+	int last = 0;
+    int data = 0;
+    int recv = 0;
+    int byt = 0;
 
-   rd_word = io_read(base_addr, RD_DATA_REG);
-   empty = (int) (rd_word & RX_EMPT_FIELD) >> 8;
-   return (empty);
+	last = now_ms();
+	hex(dir::SEND, tx_byte(0xFE)); //Resend
+	while (byt < 4 && recv == lastSuccessfulPacket[byt++]) {
+		while ((data = rx_word_from_byte()) == 0 && (now_ms() - last <= 1000))
+			;
+		last = now_ms();
+		if (data != 0) {
+			recv = hex(dir::RECV, byte(data));
+		}
+	}
+	if (byt != 4) {
+		byt = 0;
+		hex(dir::SEND, tx_byte(0xFC)); //Clear
+		//Wait for Acknowledge from Mouse
+		last = now_ms();
+		while (((data = rx_word_from_byte()) == 0 || hex(dir::RECV, data) != 0xFA) && (now_ms() - last <= 1000))
+			;
+		//Perform Reset Initialization
+		while (init() != 2)
+			;
+	}
+
+	for(int idx = 0; idx < 4; idx++)
+		byteArray[idx] = 0x00;
 }
 
-int Ps2Core::tx_idle() {
-   uint32_t rd_word;
+
+int Ps2Core::rx_word_from_byte() {
+	uint32_t data;
+	data = io_read(base_addr, RD_DATA_REG);
+	if (rx_fifo_empty(data))  // no data
+	   return (0);
+	else
+	data = io_read(base_addr, RD_DATA_REG);
+	io_write(base_addr, RM_RD_DATA_REG, 0); //dummy write to remove data from rx FIFO
+	return ((int) data);
+}
+
+
+int Ps2Core::rx_byte() {
+   uint32_t data;
+   data = io_read(base_addr, RD_DATA_REG) & RX_DATA_FIELD;
+   if (rx_fifo_empty(data))  // no data
+        return (0);
+   data = io_read(base_addr, RD_DATA_REG) & RX_DATA_FIELD;
+   io_write(base_addr, RM_RD_DATA_REG, 0); //dummy write to remove data from rx FIFO
+   return ((int) data);
+}
+
+
+
+int Ps2Core::rx_idle(uint32_t rd_word) {
    int idle;
 
-   rd_word = io_read(base_addr, RD_DATA_REG);
-   idle = (int) (rd_word & TX_IDLE_FIELD) >> 9;
+   //rd_word = io_read(base_addr, RD_DATA_REG);
+   idle = (int) (rd_word & RX_IDLE_FIELD) >> 9;
    return (idle);
 }
 
@@ -98,16 +196,11 @@ uint8_t Ps2Core::tx_byte(uint8_t cmd) {
    return cmd;
 }
 
-int Ps2Core::rx_byte() {
-   uint32_t data;
-
-   if (rx_fifo_empty())  // no data
-      return (0);
-   else {
-      data = io_read(base_addr, RD_DATA_REG) & RX_DATA_FIELD;
-      io_write(base_addr, RM_RD_DATA_REG, 0); //dummy write to remove data from rx FIFO
-      return ((int) data);
-   }
+int Ps2Core::rx_fifo_empty(uint32_t rd_word) {
+   int empty;
+   //rd_word = io_read(base_addr, RD_DATA_REG);
+   empty = (int) (rd_word & RX_EMPT_FIELD) >> 8;
+   return (empty);
 }
 
 
@@ -137,60 +230,60 @@ int Ps2Core::hex(dir direction = dir::SEND, int num = 0)
  *    6. host sends 0xf4 to start stream mode
  *    7. mouse acknowledges (0xfa)
  */
+
 int Ps2Core::init() {
+   uint32_t data;
+   int last = 0;
    /* Flush fifo buffer */
-   while(!rx_fifo_empty()) {
-	   //if (!rx_byte())
-	   //	break;
-	   rx_byte();
-   }
+   while((data = rx_word_from_byte())  && byte(data) != 0)
+	   ;
    hex(dir::SEND, tx_byte(0xFF));  //Reset Mouse
-   sleep_ms(300);
-   if (hex(dir::RECV, rx_byte()) != 0xFA) return -1;//Check response (Acknowledge)
-   //Receive Remaining two packets, without checking values
-   hex(dir::RECV, rx_byte());//0xAA (Basic Assurance Test)
-   sleep_ms(100);
-   hex(dir::RECV, rx_byte());//0x00 (Mouse ID)
-   sleep_ms(100);
+   last = now_ms();
+   while ((data = rx_word_from_byte()) == 0 && ((now_ms() - last) <= 1000));   last = now_ms();
+   if (hex(dir::RECV, byte(data)) != 0xFA) return -1;//Check response (0xFA)
+   while ((data = rx_word_from_byte()) == 0 && ((now_ms() - last) <= 1000));   last = now_ms();
+   if (hex(dir::RECV, byte(data)) != 0xAA) return -2;//Check response (0xAA)
+   while ((data = rx_word_from_byte()) == 0 && ((now_ms() - last) <= 1000));   last = now_ms();
+   if (hex(dir::RECV, byte(data)) != 0x00) return -3;//Check response (0x00)
    hex(dir::SEND, tx_byte(0xF3)); //Set Sample Rate
-   sleep_ms(100);
-   if (hex(dir::RECV, rx_byte()) != 0xFA) return -2;
+   while ((data = rx_word_from_byte()) == 0 && ((now_ms() - last) <= 1000));   last = now_ms();
+   if (hex(dir::RECV, byte(data)) != 0xFA) return -4;
    hex(dir::SEND, tx_byte(0xC8)); //Send 200
-   sleep_ms(100);
-   if (hex(dir::RECV, rx_byte()) != 0xFA) return -3;
+   while ((data = rx_word_from_byte()) == 0 && ((now_ms() - last) <= 1000));   last = now_ms();
+   if (hex(dir::RECV, byte(data)) != 0xFA) return -5;
    hex(dir::SEND, tx_byte(0xF3)); //Set Sample Rate
-   sleep_ms(100);
-   if (hex(dir::RECV, rx_byte()) != 0xFA) return -4;
+   while ((data = rx_word_from_byte()) == 0 && ((now_ms() - last) <= 1000));   last = now_ms();
+   if (hex(dir::RECV, byte(data)) != 0xFA) return -6;
    hex(dir::SEND, tx_byte(0x64)); //Send 100
-   sleep_ms(100);
-   if (hex(dir::RECV, rx_byte()) != 0xFA) return -5;
+   while ((data = rx_word_from_byte()) == 0 && ((now_ms() - last) <= 1000));   last = now_ms();
+   if (hex(dir::RECV, byte(data)) != 0xFA) return -7;
    hex(dir::SEND, tx_byte(0xF3)); //Set Sample Rate
-   sleep_ms(100);
-   if (hex(dir::RECV, rx_byte()) != 0xFA) return -6;
+   while ((data = rx_word_from_byte()) == 0 && ((now_ms() - last) <= 1000));   last = now_ms();
+   if (hex(dir::RECV, byte(data)) != 0xFA) return -8;
    hex(dir::SEND, tx_byte(0x50)); //Send 80
-   sleep_ms(100);
-   if (hex(dir::RECV, rx_byte()) != 0xFA) return -7;
+   while ((data = rx_word_from_byte()) == 0 && ((now_ms() - last) <= 1000));   last = now_ms();
+   if (hex(dir::RECV, byte(data)) != 0xFA) return -9;
    hex(dir::SEND, tx_byte(0xF2)); //Read Device Type
-   sleep_ms(100);
-   if (hex(dir::RECV, rx_byte()) != 0xFA) return -8;
-   //if (hex(dir::RECV, rx_byte()) != 0x03) return -12;
+   while ((data = rx_word_from_byte()) == 0 && ((now_ms() - last) <= 1000));   last = now_ms();
+   if (hex(dir::RECV, byte(data)) != 0xFA) return -10;
+   while ((data = rx_word_from_byte()) == 0 && ((now_ms() - last) <= 1000));   last = now_ms();
+   if (hex(dir::RECV, byte(data)) != 0x03) return -11;
    hex(dir::SEND, tx_byte(0xEA)); //Set Enable State
-   sleep_ms(100);
-   if (hex(dir::RECV, rx_byte()) != 0xFA) return -9;
+   while ((data = rx_word_from_byte()) == 0 && ((now_ms() - last) <= 1000));   last = now_ms();
+   if (hex(dir::RECV, byte(data)) != 0xFA) return -12;
    hex(dir::SEND, tx_byte(0xF4));  //Enable Data Reporting
-   sleep_ms(100);
-   if (hex(dir::RECV, rx_byte()) != 0xFA) return -10;
-   sleep_ms(100);
+   while ((data = rx_word_from_byte()) == 0 && ((now_ms() - last) <= 1000));   last = now_ms();
+   if (hex(dir::RECV, byte(data)) != 0xFA) return -13;
+   while((data = rx_word_from_byte())  && byte(data) != 0)
+     ;
    return (2);  //Mouse Detected and Initialized Successfully
 }
 int Ps2Core::get_mouse_activity(int *lbtn, int *rbtn, int *xmov,
       int *ymov, int *zmov) {
    uint8_t b1, b2, b3, b4;
 
-   uint32_t tmp;
-
    /* retrieve bytes only if 4 or a multiple of 4 exist in queue */
-   if (queueCount > 0 && queueCount % 4 == 0) {
+   if (queueCount >= 4) {
 	   b1 = dequeue();
 	   b2 = dequeue();
 	   b3 = dequeue();
@@ -209,119 +302,21 @@ int Ps2Core::get_mouse_activity(int *lbtn, int *rbtn, int *xmov,
    *lbtn = (int) (b1 & 0x01);      // extract bit 0
    *rbtn = (int) (b1 & 0x02) >> 1; // extract bit 1
    /* extract x movement; manually convert 9-bit 2's comp to int */
-   tmp = (uint32_t) b2;
-   if (b1 & 0x10) {                // check MSB (sign bit) of x movement
-      tmp = tmp | 0xffffff00;      // manual sign-extension if negative
-      tmp = (tmp ^ ((1 << 8) - 1)) + 1;    // take the twos compliment
-   }
-   *xmov = tmp;            // data conversion
+   if (b1 & 0x10)                // check MSB (sign bit) of x movement
+      *xmov = (b2 ^ 0xff) + 1;
+   else
+	  *xmov = b2; // data conversion
    /* extract y movement; manually convert 9-bit 2's comp to int */
-   tmp = (uint32_t) b3;
-   if (b1 & 0x20) {                // check MSB (sign bit) of y movement
-      tmp = tmp | 0xffffff00;      // manual sign-extension if negative
-      tmp = (tmp ^ ((1 << 8) - 1)) + 1;
-   }
-   *ymov = tmp;            // data conversion
-   tmp = (uint32_t) b4;
-   if (b4 & 0x10) {               // check MSB (sign bit) of z movement
-      tmp = tmp | 0xfffffff0;   // manual sign-extension if negative
-      tmp = (tmp ^ ((1 << 4) - 1)) + 1; //take the twos compliment
-   }
-   *zmov = tmp;           // data conversion
+
+   if (b1 & 0x20)                // check MSB (sign bit) of y movement
+      *ymov = (b3 ^ 0xff) + 1;
+   else
+	  *ymov = b3; // data conversion
+
+   if (b4 & 0x08)               // check MSB (sign bit) of z movement
+      *zmov = ((b4 ^ 0x0f) & 0x0f) + 1;
+   else
+	  *zmov = b4 & 0x0f; // data conversion
    /* success */
    return (1);
-}
-
-int Ps2Core::get_kb_ch(char *ch) {
-   // special  characters
-   #define TAB     0x09   // tab
-   #define BKSP    0x08   // backspace
-   #define ENTER   0x0d   // enter (new line)
-   #define ESC     0x1b   // escape
-   #define BKSL    0x5c   // back slash
-   #define SFT_L   0x12   // left shift
-   #define SFT_R   0x59   // right shift
-
-   #define CAPS    0x80
-   #define NUM     0x81
-   #define CTR_L   0x82
-   #define F1      0xf0
-   #define F2      0xf1
-   #define F3      0xf2
-   #define F4      0xf3
-   #define F5      0xf4
-   #define F6      0xf5
-   #define F7      0xf6
-   #define F8      0xf7
-   #define F9      0xf8
-   #define F10     0xf9
-   #define F11     0xfa
-   #define F12     0xfb
-
-   // keyboard scan code to ascii (lowercase)
-   static const uint8_t SCAN2ASCII_LO_TABLE[128] = {
-         0, F9, 0, F5, F3, F1,   F2, F12,        //00
-         0, F10, F8, F6, F4, TAB, '`', 0,        //08
-         0, 0, SFT_L, 0, CTR_L, 'q', '1', 0,     //10
-         0, 0, 'z', 's', 'a', 'w', '2', 0,       //18
-         0, 'c', 'x', 'd', 'e', '4', '3', 0,     //20
-         0, ' ', 'v', 'f', 't', 'r', '5', 0,     //28
-         0, 'n', 'b', 'h', 'g', 'y', '6', 0,     //30
-         0, 0, 'm', 'j', 'u', '7', '8', 0,       //38
-         0, ',', 'k', 'i', 'o', '0', '9', 0,     //40
-         0, '.', '/', 'l', ';', 'p', '-', 0,     //48
-         0, 0, '\'', 0, '[', '=', 0, 0,          //50
-         CAPS, SFT_R, ENTER, ']', 0, BKSL, 0, 0, //58
-         0, 0, 0, 0, 0, 0, BKSP, 0,              //60
-         0, '1', 0, '4', '7', 0, 0, 0,           //68
-         0, '.', '2', '5', '6', '8', ESC, NUM,   //70
-         F11, '+', '3', '-', '*', '9', 0, 0      //78
-         };
-   // keyboard scan code to ascii (uppercase)
-   static const uint8_t SCAN2ASCII_UP_TABLE[128] = {
-         0, F9, 0, F5, F3, F1, F2, F12,         //00
-         0, F10, F8, F6, F4, TAB, '~', 0,       //08
-         0, 0, SFT_L, 0, CTR_L, 'Q', '!', 0,    //10
-         0, 0, 'Z', 'S', 'A', 'W', '@', 0,      //18
-         0, 'C', 'X', 'D', 'E', '$', '#', 0,    //20
-         0, ' ', 'V', 'F', 'T', 'R', '%', 0,    //28
-         0, 'N', 'B', 'H', 'G', 'Y', '^', 0,    //30
-         0, 0, 'M', 'J', 'U', '&', '*', 0,      //38
-         0, '<', 'K', 'I', 'O', ')', '(', 0,    //40
-         0, '>', '?', 'L', ':', 'P', '_', 0,    //48
-         0, 0, '\"', 0, '{', '+', 0, 0,         //50
-         CAPS, SFT_R, ENTER, '}', 0, '|', 0, 0, //58
-         0, 0, 0, 0, 0, 0, BKSP, 0,             //60
-         0, '1', 0, '4', '7', 0, 0, 0,          //68
-         0, '.', '2', '5', '6', '8', ESC, NUM,  //70
-         F11, '+', '3', '-', '*', '9', 0, 0     //78
-         };
-
-   static int sft_on = 0;
-   uint8_t scode;
-
-   while (1) {
-      if (rx_fifo_empty())         // no packet
-         return (0);
-      scode = rx_byte();
-      switch (scode) {
-      case 0xf0:                 // break code
-         while (rx_fifo_empty())
-            ; // get next
-         scode = rx_byte();
-         if (scode == SFT_L || scode == SFT_R)
-            sft_on = 0;
-         break;
-      case SFT_L:                 // shift key make code
-      case SFT_R:
-         sft_on = 1;
-         break;
-      default:                    // normal make code
-         if (sft_on)
-            *ch = SCAN2ASCII_UP_TABLE[scode];
-         else
-            *ch = SCAN2ASCII_LO_TABLE[scode];
-         return (1);
-      }  // end switch
-   }  // end while
 }
