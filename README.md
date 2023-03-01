@@ -1,5 +1,6 @@
 <h1 align="center">
-  FPGA - GPU
+  fpgaPGA - Field Programmable Gate Array <br />
+  Programmable Graphics Accelerator
 </h1>
 <h4 align="center">This project is a SystemVerilog module designed to work on the VC707 FPGA Board and will operate as a 3D Graphics Acceleration Unit. It currently sends mouse movement to a PC over UART.</h4>
 <p align="center">
@@ -9,8 +10,6 @@
   <a href="#additional-information">Additional Information</a>
 </p>
 
-FPGA - GPU
-===============
 
 This project is a SystemVerilog module designed to work on the VC707 FPGA Board and will operate as a 3D Graphics Acceleration Unit. It currently sends mouse movement to a PC over UART.
 
@@ -184,65 +183,100 @@ To initialize a PS/2 mouse, the following steps are typically taken:
 6.  Wait for the mouse to send its first data byte.
 
 4 Byte Packet Information
--------------------------
 <table>
-	<thead>
-		<tr>
-			<th>Byte</th>
-			<th>Bit 7</th>
-			<th>Bit 6</th>
-			<th>Bit 5</th>
-			<th>Bit 4</th>
-			<th>Bit 3</th>
-			<th>Bit 2</th>
-			<th>Bit 1</th>
-			<th>Bit 0</th>
-		</tr>
-	</thead>
-	<tbody>
-		<tr>
-			<td>1</td>
-			<td>YO</td>
-			<td>XO</td>
-			<td>YS</td>
-			<td>XS</td>
-			<td>1</td>
-			<td>M</td>
-			<td>R</td>
-			<td>L</td>
-		</tr>
-		<tr>
-			<td>2</td>
-			<td>X7</td>
-			<td>X6</td>
-			<td>X5</td>
-			<td>X4</td>
-			<td>X3</td>
-			<td>X2</td>
-			<td>X1</td>
-			<td>X0</td>
-		</tr>
-		<tr>
-			<td>3</td>
-			<td>Y7</td>
-			<td>Y6</td>
-			<td>Y5</td>
-			<td>Y4</td>
-			<td>Y3</td>
-			<td>Y2</td>
-			<td>Y1</td>
-			<td>Y0</td>
-		</tr>
-		<tr>
-			<td>4</td>
-			<td>0</td>
-			<td>0</td>
-			<td>0</td>
-			<td>0</td>
-			<td>ZS</td>
-			<td>ZO</td>
-			<td>YO</td>
-			<td>XO</td>
-		</tr>
-	</tbody>
+  <tbody>
+    <tr>
+      <td>Byte 1</td>
+      <td>
+	<center>Bit 7</center>
+      </td>
+      <td>
+	<center>Bit 6</center>
+      </td>
+      <td>
+	<center>Bit 5</center>
+      </td>
+      <td>
+	<center>Bit 4</center>
+      </td>
+      <td>
+	<center>Bit 3</center>
+      </td>
+      <td>
+	<center>Bit 2</center>
+      </td>
+      <td>
+	<center>Bit 1</center>
+      </td>
+      <td>
+	<center>Bit 0</center>
+      </td>
+    </tr>
+    <tr>
+      <td>Byte 1</td>
+      <td>
+	<center>Y overflow</center>
+      </td>
+      <td>
+	<center>X overflow</center>
+      </td>
+      <td>
+	<center>Y sign bit</center>
+      </td>
+      <td>
+	<center>X sign bit</center>
+      </td>
+      <td>
+	<center>Always 1</center>
+      </td>
+      <td>
+	<center>Middle Btn</center>
+      </td>
+      <td>
+	<center>Right Btn</center>
+      </td>
+      <td>
+	<center>Left Btn</center>
+      </td>
+    </tr>
+    <tr>
+      <td>Byte 2</td>
+      <td colspan="8">
+	 <span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;X Movement</span>     
+      </td>
+    </tr>
+    <tr>   
+      <td>Byte 3</td>
+      <td colspan="8">
+        <span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Y Movement</span>
+      </td> 
+    </tr>
+    <tr>   
+      <td>Byte 4</td>
+      <td>
+	<center>Always 0</center>
+      </td>
+      <td>
+	<center>Always 0</center>
+      </td>
+      <td>
+	<center>5th Btn</center>
+      </td>
+      <td>
+	<center>4th Btn</center>
+      </td>
+      <td>
+	<center>Z3</center>
+      </td>
+      <td>
+	<center>Z2</center>
+      </td>
+      <td>
+	<center>Z1</center>
+      </td>
+      <td>
+	<center>Z0</center>
+      </td>
+    </tr>
+  </tbody>
 </table>
