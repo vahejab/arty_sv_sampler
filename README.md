@@ -10,9 +10,6 @@
   <a href="#additional-information">Additional Information</a>
 </p>
 
-
-This project is a SystemVerilog module designed to work on the VC707 FPGA Board and will operate as a 3D Graphics Acceleration Unit. It currently sends mouse movement to a PC over UART.
-
 Hardware Components
 -------------------
 
