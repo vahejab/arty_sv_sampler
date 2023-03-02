@@ -60,49 +60,39 @@ int Ps2Core::byte(uint32_t data) {
 }
 
 void Ps2Core::getPackets() {
-    int data = 0;
-    uint8_t byteArray[4] = {0x00, 0x00, 0x00, 0x00};
+    static int8_t data = 0;
+    static uint8_t byteArray[4] = {0x00, 0x00, 0x00, 0x00};
     int bytesProcessed = 0;
     while (bytesProcessed < 4) {
-        if (bytesProcessed == 0 && (data = rx_word_from_byte()) != 0 && rx_idle(data) && (byte(data) & 0x08) == 0x08) {
+    	while (rx_fifo_empty())
+    		data = rx_byte();
+    	hex(dir::RECV, byte(data));
+        if ((bytesProcessed == 0) && (byte(data) & 0x08) == 0x08) {
         	if ((data & 0xF0) == 0xF0 || (data & 0xC0) >= 0x40) {//error or overflow on at least one of x, y
-				bytesProcessed = 0;
-				for (int idx = 0; idx < 4; idx++) {
-					byteArray[idx] = 0x00;
-					//lastSuccessfulPacket[idx] = 0x00;
-				}
-				//tx_byte(0xFC);  // Clear Mouse Buffer
-				//tx_byte(0xF5);  // Disable Data Reporting
-				// Flush Host Buffer
-				while((data = rx_word_from_byte())  && byte(data) != 0)
-					;
-				//tx_byte(0xF4);  // Enable Data Reporting
-				continue;
+        		bytesProcessed++;
 			}
         	else {
 				byteArray[bytesProcessed++] = byte(data);
         	}
 		}
-        else if (bytesProcessed  && (data = rx_word_from_byte()) != 0 && rx_idle(data)) {
-        	if ((bytesProcessed == 1 && (byte(data) & 0x80) >> 7 != (byteArray[0] & 0x10) >> 4) ||
-        	    (bytesProcessed == 2 && (byte(data) & 0x80) >> 7 != (byteArray[0] & 0x20) >> 5) ||
-        	    (bytesProcessed == 3 && ((byteArray[0] & 0x08) == 0x08) && byteArray[1] == 0x00 && byteArray[2] == 0x00 && (byte(data) == 0x00)) ||
-				(bytesProcessed == 3 && ((byteArray[0] & 0x08) == 0x08) && byteArray[1] == 0x00 && byteArray[2] == 0x00 && (byte(data) & 0x0F) == 0x08) ||
-				(bytesProcessed == 3 && (byte(data) & 0xC0) >= 0x40) ||
-				(byte(data) & 0xF0) == 0xF0)
+        else if (bytesProcessed >= 1) {
+        	if (//(bytesProcessed == 1 && (byte(data) & 0x80) >> 7 != (byteArray[0] & 0x10) >> 4) ||
+        	    //(bytesProcessed == 2 && (byte(data) & 0x80) >> 7 != (byteArray[0] & 0x20) >> 5) ||
+				((bytesProcessed == 3) && ((byteArray[1] == 0x00) && (byteArray[2] == 0x00) && ((byte(data) & 0x07) == 0x00)))
+				//((bytesProcessed == 1) && (((byte(data) < 0x80) || (byte(data) > 0x7F)))) ||
+				//((bytesProcessed == 2) && (((byte(data) < 0x80) || (byte(data) > 0x7F)))) ||
+				//((bytesProcessed == 3) && (((byte(data) & 0x0F) < 0x08) || ((byte(data) & 0x0F) > 0x07)))
+				)
 			    {//mismatch in sign, no data in x,y, or error (0xF0)
-			    bytesProcessed = 0;
-			    for (int idx = 0; idx < 4; idx++) {
-			    	byteArray[idx] = 0x00;
-			    	//lastSuccessfulPacket[idx] = 0x00;
-			    }
-				//tx_byte(0xFC);  // Clear Mouse Buffer
-				//tx_byte(0xF5);  // Disable Data Reporting
-				// Flush Host Buffer
-				while((data = rx_word_from_byte())  && byte(data) != 0)
-					;
-				//tx_byte(0xF4);  // Enable Data Reporting
-			    continue;
+
+				if (bytesProcessed == 3) {
+					bytesProcessed = 0;
+					for (int idx = 0; idx < 4; idx++) {
+						byteArray[idx] = 0x00;
+					}
+				} else {
+					bytesProcessed++;
+				}
         	}
         	else {
            		byteArray[bytesProcessed++] = byte(data);
@@ -111,11 +101,8 @@ void Ps2Core::getPackets() {
     }
     for (int idx = 0; idx < 4; idx++) {
     	enqueue(byteArray[idx]);
- 		hex(dir::RECV, byteArray[idx]);
-    	//lastSuccessfulPacket[idx] = byteArray[idx];
-    	byteArray[idx] = 0x00;
+ 		//hex(dir::RECV, byteArray[idx]);
     }
-    uart.disp((int)queueCount);
 }
 
 void Ps2Core::checkMovement() {
@@ -135,7 +122,7 @@ void Ps2Core::handleError(uint8_t *byteArray, uint8_t *lastSuccessfulPacket) {
 	last = now_ms();
 	hex(dir::SEND, tx_byte(0xFE)); //Resend
 	while (byt < 4 && recv == lastSuccessfulPacket[byt++]) {
-		while ((data = rx_word_from_byte()) == 0 && (now_ms() - last <= 1000))
+		while ((rx_fifo_empty()) &&  (now_ms() - last <= 1000))
 			;
 		last = now_ms();
 		if (data != 0) {
@@ -147,7 +134,7 @@ void Ps2Core::handleError(uint8_t *byteArray, uint8_t *lastSuccessfulPacket) {
 		hex(dir::SEND, tx_byte(0xFC)); //Clear
 		//Wait for Acknowledge from Mouse
 		last = now_ms();
-		while (((data = rx_word_from_byte()) == 0 || hex(dir::RECV, data) != 0xFA) && (now_ms() - last <= 1000))
+		while ((((data = rx_word_from_byte())) || hex(dir::RECV, data) != 0xFA) && (now_ms() - last <= 1000))
 			;
 		//Perform Reset Initialization
 		while (init() != 2)
@@ -161,10 +148,8 @@ void Ps2Core::handleError(uint8_t *byteArray, uint8_t *lastSuccessfulPacket) {
 
 int Ps2Core::rx_word_from_byte() {
 	uint32_t data;
-	data = io_read(base_addr, RD_DATA_REG);
-	if (rx_fifo_empty(data))  // no data
-	   return (0);
-	else
+	if (rx_fifo_empty())
+		return 0;
 	data = io_read(base_addr, RD_DATA_REG);
 	io_write(base_addr, RM_RD_DATA_REG, 0); //dummy write to remove data from rx FIFO
 	return ((int) data);
@@ -173,9 +158,6 @@ int Ps2Core::rx_word_from_byte() {
 
 int Ps2Core::rx_byte() {
    uint32_t data;
-   data = io_read(base_addr, RD_DATA_REG) & RX_DATA_FIELD;
-   if (rx_fifo_empty(data))  // no data
-        return (0);
    data = io_read(base_addr, RD_DATA_REG) & RX_DATA_FIELD;
    io_write(base_addr, RM_RD_DATA_REG, 0); //dummy write to remove data from rx FIFO
    return ((int) data);
@@ -196,9 +178,9 @@ uint8_t Ps2Core::tx_byte(uint8_t cmd) {
    return cmd;
 }
 
-int Ps2Core::rx_fifo_empty(uint32_t rd_word) {
+int Ps2Core::rx_fifo_empty() {
    int empty;
-   //rd_word = io_read(base_addr, RD_DATA_REG);
+   uint32_t rd_word = io_read(base_addr, RD_DATA_REG);
    empty = (int) (rd_word & RX_EMPT_FIELD) >> 8;
    return (empty);
 }
@@ -232,50 +214,88 @@ int Ps2Core::hex(dir direction = dir::SEND, int num = 0)
  */
 
 int Ps2Core::init() {
-   uint32_t data;
+   static uint32_t data = 0x00000300;
    int last = 0;
-   /* Flush fifo buffer */
-   while((data = rx_word_from_byte())  && byte(data) != 0)
-	   ;
+   while(!rx_fifo_empty())
+   		data = rx_word_from_byte();
    hex(dir::SEND, tx_byte(0xFF));  //Reset Mouse
    last = now_ms();
-   while ((data = rx_word_from_byte()) == 0 && ((now_ms() - last) <= 1000));   last = now_ms();
+   data = rx_word_from_byte();
+   while((byte(data)!= 0xFA) && (now_ms() - last) <= 1000)
+	  data = rx_word_from_byte();
    if (hex(dir::RECV, byte(data)) != 0xFA) return -1;//Check response (0xFA)
-   while ((data = rx_word_from_byte()) == 0 && ((now_ms() - last) <= 1000));   last = now_ms();
+   last = now_ms();
+   data = rx_word_from_byte();
+   while((byte(data)!= 0xAA) && (now_ms() - last) <= 1000)
+	  data = rx_word_from_byte();
    if (hex(dir::RECV, byte(data)) != 0xAA) return -2;//Check response (0xAA)
-   while ((data = rx_word_from_byte()) == 0 && ((now_ms() - last) <= 1000));   last = now_ms();
+   last = now_ms();
+   data = rx_word_from_byte();
+   while((byte(data)!= 0x0A) && (now_ms() - last) <= 1000)
+	  data = rx_word_from_byte();
    if (hex(dir::RECV, byte(data)) != 0x00) return -3;//Check response (0x00)
    hex(dir::SEND, tx_byte(0xF3)); //Set Sample Rate
-   while ((data = rx_word_from_byte()) == 0 && ((now_ms() - last) <= 1000));   last = now_ms();
+   last = now_ms();
+   data = rx_word_from_byte();
+   while((byte(data)!= 0xFA) && (now_ms() - last) <= 1000)
+	  data = rx_word_from_byte();
    if (hex(dir::RECV, byte(data)) != 0xFA) return -4;
+   last = now_ms();
    hex(dir::SEND, tx_byte(0xC8)); //Send 200
-   while ((data = rx_word_from_byte()) == 0 && ((now_ms() - last) <= 1000));   last = now_ms();
+   last = now_ms();
+   data = rx_word_from_byte();
+   while((byte(data)!= 0xFA) && (now_ms() - last) <= 1000)
+	  data = rx_word_from_byte();
    if (hex(dir::RECV, byte(data)) != 0xFA) return -5;
+   last = now_ms();
    hex(dir::SEND, tx_byte(0xF3)); //Set Sample Rate
-   while ((data = rx_word_from_byte()) == 0 && ((now_ms() - last) <= 1000));   last = now_ms();
+   last = now_ms();
+   data = rx_word_from_byte();
+   while((byte(data)!= 0xFA) && (now_ms() - last) <= 1000)
+	  data = rx_word_from_byte();
    if (hex(dir::RECV, byte(data)) != 0xFA) return -6;
    hex(dir::SEND, tx_byte(0x64)); //Send 100
-   while ((data = rx_word_from_byte()) == 0 && ((now_ms() - last) <= 1000));   last = now_ms();
+   last = now_ms();
+   data = rx_word_from_byte();
+   while((byte(data)!= 0xFA) && (now_ms() - last) <= 1000)
+	  data = rx_word_from_byte();
    if (hex(dir::RECV, byte(data)) != 0xFA) return -7;
    hex(dir::SEND, tx_byte(0xF3)); //Set Sample Rate
-   while ((data = rx_word_from_byte()) == 0 && ((now_ms() - last) <= 1000));   last = now_ms();
+   last = now_ms();
+   data = rx_word_from_byte();
+   while((byte(data)!= 0xFA) && (now_ms() - last) <= 1000)
+	  data = rx_word_from_byte();
    if (hex(dir::RECV, byte(data)) != 0xFA) return -8;
    hex(dir::SEND, tx_byte(0x50)); //Send 80
-   while ((data = rx_word_from_byte()) == 0 && ((now_ms() - last) <= 1000));   last = now_ms();
+   last = now_ms();
+   data = rx_word_from_byte();
+   while((byte(data)!= 0xFA) && (now_ms() - last) <= 1000)
+	  data = rx_word_from_byte();
    if (hex(dir::RECV, byte(data)) != 0xFA) return -9;
    hex(dir::SEND, tx_byte(0xF2)); //Read Device Type
-   while ((data = rx_word_from_byte()) == 0 && ((now_ms() - last) <= 1000));   last = now_ms();
+   last = now_ms();
+   data = rx_word_from_byte();
+   while((byte(data)!= 0xFA) && (now_ms() - last) <= 1000)
+	  data = rx_word_from_byte();
    if (hex(dir::RECV, byte(data)) != 0xFA) return -10;
-   while ((data = rx_word_from_byte()) == 0 && ((now_ms() - last) <= 1000));   last = now_ms();
+   last = now_ms();
+   data = rx_word_from_byte();
+   while((byte(data)!= 0x03) && (now_ms() - last) <= 1000)
+	  data = rx_word_from_byte();
    if (hex(dir::RECV, byte(data)) != 0x03) return -11;
    hex(dir::SEND, tx_byte(0xEA)); //Set Enable State
-   while ((data = rx_word_from_byte()) == 0 && ((now_ms() - last) <= 1000));   last = now_ms();
+   last = now_ms();
+   data = rx_word_from_byte();
+   while((byte(data)!= 0xFA) && (now_ms() - last) <= 1000)
+	  data = rx_word_from_byte();
+   last = now_ms();
    if (hex(dir::RECV, byte(data)) != 0xFA) return -12;
    hex(dir::SEND, tx_byte(0xF4));  //Enable Data Reporting
-   while ((data = rx_word_from_byte()) == 0 && ((now_ms() - last) <= 1000));   last = now_ms();
+   last = now_ms();
+   data = rx_word_from_byte();
+   while((byte(data)!= 0xFA) && (now_ms() - last) <= 1000)
+	  data = rx_word_from_byte();
    if (hex(dir::RECV, byte(data)) != 0xFA) return -13;
-   while((data = rx_word_from_byte())  && byte(data) != 0)
-     ;
    return (2);  //Mouse Detected and Initialized Successfully
 }
 int Ps2Core::get_mouse_activity(int *lbtn, int *rbtn, int *xmov,
@@ -302,21 +322,21 @@ int Ps2Core::get_mouse_activity(int *lbtn, int *rbtn, int *xmov,
    *lbtn = (int) (b1 & 0x01);      // extract bit 0
    *rbtn = (int) (b1 & 0x02) >> 1; // extract bit 1
    /* extract x movement; manually convert 9-bit 2's comp to int */
-   if (b1 & 0x10)                // check MSB (sign bit) of x movement
-      *xmov = (b2 ^ 0xff) + 1;
+   if ((b1 & 0x10) >> 4)                // check MSB (sign bit) of x movement
+      *xmov = -int(((b2 & 0x7f) ^ 0xff) + 1);
    else
-	  *xmov = b2; // data conversion
+	  *xmov = int(b2 & 0x7f); // data conversion
    /* extract y movement; manually convert 9-bit 2's comp to int */
 
-   if (b1 & 0x20)                // check MSB (sign bit) of y movement
-      *ymov = (b3 ^ 0xff) + 1;
+   if ((b1 & 0x20) >> 5)                // check MSB (sign bit) of y movement
+      *ymov = -int(((b3 & 0x7f) ^ 0xff) + 1);
    else
-	  *ymov = b3; // data conversion
+	  *ymov = int(b3 & 0x7f);// data conversion
 
-   if (b4 & 0x08)               // check MSB (sign bit) of z movement
-      *zmov = ((b4 ^ 0x0f) & 0x0f) + 1;
+   if ((b4 & 0x08) >> 3)               // check MSB (sign bit) of z movement
+      *zmov = -int(((b4 & 0x07) ^ 0x08) + 1);
    else
-	  *zmov = b4 & 0x0f; // data conversion
+	  *zmov = int(b4 & 0x07); // data conversion
    /* success */
    return (1);
 }

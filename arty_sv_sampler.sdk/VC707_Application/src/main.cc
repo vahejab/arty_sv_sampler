@@ -74,14 +74,20 @@ Ps2Core ps2(get_slot_addr(BRIDGE_BASE, S2_PS2));
 
 int main() {
 	//XIOModule_DiscreteWrite(&ps2.gpo, XGPIO_0_CHANNEL, 0); // disable writes to the gpi register by writing 0 to gpo
-	uint32_t data;
 	Ps2Core *ps2p = &ps2;
+	static uint32_t data = 0;
 	while (1) {
 		uart_check();
 		ps2_check(&ps2);
-		uart.disp("Please Power Cycle Mouse..");
-		while ((data = ps2p->rx_word_from_byte()) == 0 && ps2p->byte(data) != 0xAA);
-		while ((data = ps2p->rx_word_from_byte()) == 0 && ps2p->byte(data) != 0x00);
+		//uart.disp("Mouse initialization unsuccessful...\r\n");
+		//uart.disp("Please power cycle mouse...\r\n");
+		//while((data = ps2p->rx_word_from_byte()) && ps2p->byte(data) != 0xAA);
+		//while((data = ps2p->rx_word_from_byte()) && ps2p->byte(data) != 0x00);
+		//uart.disp("Performing silent mouse reset...\r\n");
+		//ps2p->tx_byte(0xF5);
+		//ps2p->tx_byte(0xF6);
+		//ps2p->tx_byte(0xF4);
+		//uart.disp("Flushing receive FIFO buffer...\r\n");
 	} //while
 	return 0;
 } //main

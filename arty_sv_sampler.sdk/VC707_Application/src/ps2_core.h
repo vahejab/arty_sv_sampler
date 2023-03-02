@@ -88,7 +88,7 @@ class Ps2Core {
 		* @return 1: if empty; 0: otherwise
 		*
 		*/
-	   int rx_fifo_empty(uint32_t rd_word);
+	   int rx_fifo_empty();
 
 	   /**
 		* check whether the ps2 receiver is idle
