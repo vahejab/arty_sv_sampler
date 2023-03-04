@@ -6,26 +6,22 @@
  * @author p chu
  * @version v1.0: initial release
  ********************************************************************/
-#define XPAR_XGPIO_NUM_INSTANCES 1
-
+#define XPAR_XINTC_NUM_INSTANCES 1
 #include "xparameters.h"
 //#include "microblaze_exception_handler.c"
-#include "xil_exception.c"
+#include "xil_exception.h"
 #include "mb_interface.h"
 #include "xil_assert.c"
-//#include "xintc_g.c"
-/*#include "xgpio_intr.c"
-#include "xgpio_extra.c"
-#include "xgpio_g.c"
-#include "xgpio_sinit.c"
-#include "xgpio.c"*/
+#include "xiomodule.h"
 #include "ps2_core.h"
 
-// Define the address of the interrupt control register for the MicroBlaze processor
-#define XPAR_AXI_GPIO_0_DEVICE_ID 0
 #define INTC_DEVICE_ID 0
-
+#define INTERRUPT_ID 0
 #define INTERRUPT_CONTROL_REG XPAR_IOMODULE_SINGLE_BASEADDR + XIN_ISR_OFFSET
+
+
+// Define interrupt priority level
+#define INTR_PRIORITY           0
 
 Ps2Core::Ps2Core(uint32_t core_base_addr) {
    base_addr = core_base_addr;
@@ -59,14 +55,30 @@ int Ps2Core::byte(uint32_t data) {
 	return ((int) (data & RX_DATA_FIELD));
 }
 
-void Ps2Core::getPackets() {
+void Ps2Core::handleInterrupt(Ps2Core *ps2) {
+	ps2->getPacket();
+}
+
+void Ps2Core::setUpInterrupt(){
+	u8 intr_id = 0;
+	XIOModule_Initialize(&intr, XPAR_IOMODULE_0_DEVICE_ID);
+	microblaze_register_handler(XIOModule_DeviceInterruptHandler, XPAR_IOMODULE_0_DEVICE_ID);
+	XIOModule_Start(&intr);
+	XIOModule_Connect(&intr, XIN_IOMODULE_EXTERNAL_INTERRUPT_INTR, (XInterruptHandler)handleInterrupt, this);
+    XIOModule_Enable(&intr, intr_id);
+	XIOModule_Enable(&intr, XIN_IOMODULE_EXTERNAL_INTERRUPT_INTR);
+	microblaze_enable_interrupts();
+}
+
+int Ps2Core::getPacket() {
     static uint32_t data = 0;
     static uint8_t byteArray[4] = {0x00, 0x00, 0x00, 0x00};
-    int bytesProcessed = 0;
-    int error = 0;
-    while (bytesProcessed < 4) {
-    	while(!(data = rx_word_from_byte()))
-    		;
+    static int bytesProcessed = 0;
+    static int error = 0;
+    if (bytesProcessed < 4) {
+    	//while(!(data = rx_word_from_byte()))
+    	//	;
+    	//data = rx_word_from_byte();
     	hex(dir::RECV, data);
         if ((bytesProcessed == 0)) {
         	if (((byte(data) & 0x08) == 0x00) || ((byte(data) & 0xF0) == 0xF0) || ((byte(data) & 0xC0) >= 0x40)) {//error or overflow on at least one of x, y
@@ -97,54 +109,16 @@ void Ps2Core::getPackets() {
     				byteArray[idx] = 0x00;
     			}
     			bytesProcessed = 0;
+    			return 0;  //byte not pushed
     		}
         }
     }
-    for (int idx = 0; idx < 4; idx++) {
-    	enqueue(byteArray[idx]);
-    }
+    //for (int idx = 0; idx < 4; idx++) {
+    //	enqueue(byteArray[idx]);
+    //}
+    enqueue(byte(data));
+    return 1; //byte pushed
 }
-
-void Ps2Core::checkMovement() {
-	Ps2Core::getMovementPackets();
-}
-
-void Ps2Core::getMovementPackets()  {
-	Ps2Core::getPackets();
-}
-
-void Ps2Core::handleError(uint8_t *byteArray, uint8_t *lastSuccessfulPacket) {
-	int last = 0;
-    int data = 0;
-    int recv = 0;
-    int byt = 0;
-
-	last = now_ms();
-	hex(dir::SEND, tx_byte(0xFE)); //Resend
-	while (byt < 4 && recv == lastSuccessfulPacket[byt++]) {
-		while ((rx_fifo_empty()) &&  (now_ms() - last <= 1000))
-			;
-		last = now_ms();
-		if (data != 0) {
-			recv = hex(dir::RECV, byte(data));
-		}
-	}
-	if (byt != 4) {
-		byt = 0;
-		hex(dir::SEND, tx_byte(0xFC)); //Clear
-		//Wait for Acknowledge from Mouse
-		last = now_ms();
-		while ((((data = rx_word_from_byte())) || hex(dir::RECV, data) != 0xFA) && (now_ms() - last <= 1000))
-			;
-		//Perform Reset Initialization
-		while (init() != 2)
-			;
-	}
-
-	for(int idx = 0; idx < 4; idx++)
-		byteArray[idx] = 0x00;
-}
-
 
 int Ps2Core::rx_word_from_byte() {
 	uint32_t data;
@@ -323,7 +297,7 @@ int Ps2Core::init() {
 int Ps2Core::get_mouse_activity(int *lbtn, int *rbtn, int *xmov,
       int *ymov, int *zmov) {
    uint8_t b1, b2, b3, b4;
-
+   //uart.disp((char)(queueCount+'0'));
    /* retrieve bytes only if 4 or a multiple of 4 exist in queue */
    if (queueCount >= 4) {
 	   b1 = dequeue();
@@ -337,7 +311,7 @@ int Ps2Core::get_mouse_activity(int *lbtn, int *rbtn, int *xmov,
 	   *xmov = 0;
 	   *ymov = 0;
 	   *zmov = 0;
-	   return (0);
+	   return (1);
    }
 
    /* extract button info */

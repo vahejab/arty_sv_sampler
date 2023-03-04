@@ -12,10 +12,10 @@
 #define _PS2_H_INCLUDED
 
 #define QUEUE_SIZE 256
-
+#define XPAR_INTC_MAX_NUM_INTR_INPUTS 1
 #include "xparameters.h"
 //#include "xgpio.h"
-//#include "xiomodule.h"
+#include "xiomodule.h"
 //#include "xintc.h"
 #include "chu_init.h"
 
@@ -31,13 +31,9 @@
 
 class Ps2Core {
 	public:
-	    //XIntc intc;
-    	//XIOModule io;
-    	// Define the GPIO instance and pointer
-    	//XGpio Gpio;
-    	//XGpio* GpioPtr = &Gpio;
+	    XIOModule intr;
 
-		unsigned int queueCount = 0;
+		volatile unsigned int queueCount = 0;
 		/**
 		  * Register map
 		  *
@@ -78,10 +74,9 @@ class Ps2Core {
 	   uint8_t dequeue(void);
 	   void checkMovement();
 	   int byte(uint32_t data);
-	   void getPackets();
-	   void getMovementPackets();
-	   void handleError(uint8_t *byteArray, uint8_t *lastSuccessfulPacket);
-
+	   int getPacket();
+	   static void handleInterrupt(Ps2Core *ps2);
+	   void setUpInterrupt();
 	   /**
 		* check whether the ps2 receiver fifo is empty
 		*

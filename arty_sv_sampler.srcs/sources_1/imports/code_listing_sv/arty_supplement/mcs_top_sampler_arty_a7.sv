@@ -34,7 +34,9 @@ module mcs_top_heat_arty_a7
        logic [20:0] fp_addr;       
        logic [31:0] fp_wr_data;    
        logic [31:0] fp_rd_data; 
-
+       // PS/2 rx done interrupt
+       logic ps2_rx_done_interrupt;
+       logic irq;
        
        //instantiate uBlaze MCS
        cpu cpu_unit (
@@ -47,8 +49,27 @@ module mcs_top_heat_arty_a7
         .IO_read_strobe(io_read_strobe),    
         .IO_ready(io_ready),                
         .IO_write_data(io_write_data),      
-        .IO_write_strobe(io_write_strobe)
+        .IO_write_strobe(io_write_strobe),
+        .INTC_Interrupt(irq)
         );
+        
+       axi_intc_0 intc(
+        .s_axi_awaddr(0),
+        .s_axi_awvalid(0),
+        .s_axi_wdata(0),
+        .s_axi_wvalid(0),
+        .s_axi_bready(0),
+        .s_axi_araddr(0),
+        .s_axi_arvalid(0),
+        .s_axi_rready(0),
+        .s_axi_wstrb(0),
+        .s_axi_aclk (clk_100M),
+        .s_axi_aresetn(~reset),
+        .processor_clk(clk_100M),
+        .processor_rst(reset),
+        .intr(ps2_rx_done_interrupt),
+        .irq(irq)
+       );
 
        // instantiate bridge
        chu_mcs_bridge #(.BRG_BASE(BRG_BASE)) 
@@ -85,6 +106,7 @@ module mcs_top_heat_arty_a7
         .ps2c_out(ps2c_out),
         .ps2d_out(ps2d_out),          
         .rx(rx),
-        .tx(tx)
+        .tx(tx),
+        .ps2_rx_done_interrupt(ps2_rx_done_interrupt)
        );   
     endmodule 
