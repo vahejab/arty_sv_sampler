@@ -55,33 +55,16 @@ int Ps2Core::byte(uint32_t data) {
 	return ((int) (data & RX_DATA_FIELD));
 }
 
-void Ps2Core::handleInterrupt(Ps2Core *ps2) {
-	ps2->getPacket();
-}
-
-void Ps2Core::setUpInterrupt(){
-	u8 intr_id = 0;
-	XIOModule_Initialize(&intr, XPAR_IOMODULE_0_DEVICE_ID);
-	microblaze_register_handler(XIOModule_DeviceInterruptHandler, XPAR_IOMODULE_0_DEVICE_ID);
-	XIOModule_Start(&intr);
-	XIOModule_Connect(&intr, XIN_IOMODULE_EXTERNAL_INTERRUPT_INTR, (XInterruptHandler)handleInterrupt, this);
-    XIOModule_Enable(&intr, intr_id);
-	XIOModule_Enable(&intr, XIN_IOMODULE_EXTERNAL_INTERRUPT_INTR);
-	microblaze_enable_interrupts();
-}
-
-int Ps2Core::getPacket() {
-    static uint32_t data = 0;
+void Ps2Core::getPackets() {
+    static int8_t data = 0;
     static uint8_t byteArray[4] = {0x00, 0x00, 0x00, 0x00};
-    static int bytesProcessed = 0;
-    static int error = 0;
-    if (bytesProcessed < 4) {
-    	//while(!(data = rx_word_from_byte()))
-    	//	;
-    	//data = rx_word_from_byte();
-    	hex(dir::RECV, data);
-        if ((bytesProcessed == 0)) {
-        	if (((byte(data) & 0x08) == 0x00) || ((byte(data) & 0xF0) == 0xF0) || ((byte(data) & 0xC0) >= 0x40)) {//error or overflow on at least one of x, y
+    int bytesProcessed = 0;
+    int error = 0;
+    while (bytesProcessed < 4) {
+    	while (rx_fifo_empty())
+    		data = rx_byte();
+        if ((bytesProcessed == 0) && (byte(data) & 0x08) == 0x08) {
+        	if ((data & 0xF0) == 0xF0 || (data & 0xC0) >= 0x40) {//error or overflow on at least one of x, y
         		bytesProcessed++;
         		error = 1;
 			}
@@ -90,34 +73,37 @@ int Ps2Core::getPacket() {
         	}
 		}
         else if (bytesProcessed >= 1) {
-        	if ( //((bytesProcessed == 3) && (error == 1) && ((byte(data) & 0x0F) == 0x08)) ||
-			     (bytesProcessed == 1 && (byte(data) & 0xFF) == 0xFF) ||
-        		 (bytesProcessed == 2 && (byte(data) & 0xFF) == 0xFF) ||
-				 (bytesProcessed == 3 && (error == 0) && (byte(data) == 0x00 && byteArray[1] == 0x00 && byteArray[2] == 0x00)) ||
-				 error
+        	if ((bytesProcessed == 1 && ((byteArray[0] & 0x08) == 0x00)) ||
+        	    (bytesProcessed == 1 && (byte(data) & 0x80) >> 7 != (byteArray[0] & 0x10) >> 4) ||
+        	    (bytesProcessed == 2 && (byte(data) & 0x80) >> 7 != (byteArray[0] & 0x20) >> 5) ||
+				((bytesProcessed == 3) && ((byteArray[1] == 0x00) && (byteArray[2] == 0x00) && ((byte(data) & 0x07) == 0x00))) ||
+				((bytesProcessed == 3) && (((byte(data) & 0x80) != 0x00) || ((byte(data) & 0x40) != 0x00)))
+				//((bytesProcessed == 1) && (((byte(data) < 0x80) || (byte(data) > 0x7F)))) ||
+				//((bytesProcessed == 2) && (((byte(data) < 0x80) || (byte(data) > 0x7F)))) ||
+				//((bytesProcessed == 3) && (((byte(data) & 0x0F) < 0x08) || ((byte(data) & 0x0F) > 0x07)))
 				)
 			    {//mismatch in sign, no data in x,y, or error (0xF0)
-        		error = 1;
-        		bytesProcessed++;
+
+				if (bytesProcessed == 3) {
+					bytesProcessed = 0;
+					error = 0;
+					for (int idx = 0; idx < 4; idx++) {
+						byteArray[idx] = 0x00;
+					}
+				} else {
+					bytesProcessed++;
+	                error = 1;
+				}
         	}
-        	else if (!error) {
+        	else {
            		byteArray[bytesProcessed++] = byte(data);
         	}
-        	if ((bytesProcessed == 4) && (error == 1)){
-    			error = 0;
-    			for (int idx = 0; idx < 4; idx++) {
-    				byteArray[idx] = 0x00;
-    			}
-    			bytesProcessed = 0;
-    			return 0;  //byte not pushed
-    		}
         }
     }
-    //for (int idx = 0; idx < 4; idx++) {
-    //	enqueue(byteArray[idx]);
-    //}
-    enqueue(byte(data));
-    return 1; //byte pushed
+    for (int idx = 0; idx < 4; idx++) {
+    	enqueue(byteArray[idx]);
+ 		hex(dir::RECV, byteArray[idx]);
+    }
 }
 
 int Ps2Core::rx_word_from_byte() {
@@ -132,7 +118,7 @@ int Ps2Core::rx_word_from_byte() {
 
 int Ps2Core::rx_byte() {
    uint32_t data;
-   data = io_read(base_addr, RD_DATA_REG);
+   data = io_read(base_addr, RD_DATA_REG) & RX_DATA_FIELD;
    io_write(base_addr, RM_RD_DATA_REG, 0); //dummy write to remove data from rx FIFO
    return ((int) data);
 }
@@ -190,8 +176,8 @@ int Ps2Core::hex(dir direction = dir::SEND, int num = 0)
 int Ps2Core::init() {
    static uint32_t data = 0x00000300;
    int last = 0;
-   while((data = rx_word_from_byte()))
-	   ;
+   while(!rx_fifo_empty())
+   		data = rx_word_from_byte();
    hex(dir::SEND, tx_byte(0xFF));  //Reset Mouse
    last = now_ms();
    data = rx_word_from_byte();
@@ -246,52 +232,32 @@ int Ps2Core::init() {
    while((byte(data)!= 0xFA) && (now_ms() - last) <= 1000)
 	  data = rx_word_from_byte();
    if (hex(dir::RECV, byte(data)) != 0xFA) return -9;
-   hex(dir::SEND, tx_byte(0xE8));  //Set Resolution
-   //last = now_ms();
-  /* data = rx_word_from_byte();
-   while((byte(data)!= 0xFA) && (now_ms() - last) <= 1000)
-  	  data = rx_word_from_byte();
-   if (hex(dir::RECV, byte(data)) != 0xFA) return -10;
-  */
-   hex(dir::SEND, tx_byte(0x32));  //Send 800 for Resolution
-   last = now_ms();
-   data = rx_word_from_byte();
-   while((byte(data)!= 0xFA) && (now_ms() - last) <= 1000)
-	  data = rx_word_from_byte();
-   if (hex(dir::RECV, byte(data)) != 0xFA) return -11;
-   hex(dir::SEND, tx_byte(0xE6)); //Send Scaling Factor Command
-   last = now_ms();
-   data = rx_word_from_byte();
-   while((byte(data)!= 0xFA) && (now_ms() - last) <= 1000)
-	   data = rx_word_from_byte();
-   if (hex(dir::RECV, byte(data)) != 0xFA) return -12;
-   hex(dir::SEND, tx_byte(0xF2)); //Set Z Scaling Factor
-   hex(dir::SEND, tx_byte(0x0E)); //Set Z Scaling Factor to 8 bits
-   last = now_ms();
-   data = rx_word_from_byte();
-   while((byte(data)!= 0xFA) && (now_ms() - last) <= 1000)
-	   data = rx_word_from_byte();
-   if (hex(dir::RECV, byte(data)) != 0xFA) return -14;
    hex(dir::SEND, tx_byte(0xF2)); //Read Device Type
    last = now_ms();
    data = rx_word_from_byte();
-   while((byte(data)!= 0x00) && (now_ms() - last) <= 1000)
+   while((byte(data)!= 0xFA) && (now_ms() - last) <= 1000)
 	  data = rx_word_from_byte();
-   if (hex(dir::RECV, byte(data)) != 0x00) return -16;
+   if (hex(dir::RECV, byte(data)) != 0xFA) return -10;
+   last = now_ms();
+   data = rx_word_from_byte();
+   while((byte(data)!= 0x03) && (now_ms() - last) <= 1000)
+	  data = rx_word_from_byte();
+   if (hex(dir::RECV, byte(data)) != 0x03) return -11;
    hex(dir::SEND, tx_byte(0xEA)); //Set Enable State
    last = now_ms();
    data = rx_word_from_byte();
    while((byte(data)!= 0xFA) && (now_ms() - last) <= 1000)
 	  data = rx_word_from_byte();
    last = now_ms();
-   if (hex(dir::RECV, byte(data)) != 0xFA) return -17;
+   if (hex(dir::RECV, byte(data)) != 0xFA) return -12;
    hex(dir::SEND, tx_byte(0xF4));  //Enable Data Reporting
    last = now_ms();
+   data = rx_word_from_byte();
    while((byte(data)!= 0xFA) && (now_ms() - last) <= 1000)
 	  data = rx_word_from_byte();
-   if (hex(dir::RECV, byte(data)) != 0xFA) return -18;
-   //while ((data = rx_word_from_byte()))
-   //    ;
+   if (hex(dir::RECV, byte(data)) != 0xFA) return -13;
+   while(byte(rx_word_from_byte()) == 0xFA)      //Flush FIFO
+	  ;
    return (2);  //Mouse Detected and Initialized Successfully
 }
 int Ps2Core::get_mouse_activity(int *lbtn, int *rbtn, int *xmov,
@@ -329,10 +295,10 @@ int Ps2Core::get_mouse_activity(int *lbtn, int *rbtn, int *xmov,
    else
 	  *ymov = int(b3 & 0x7f);// data conversion
 
-   if ((b4 & 0x80) >> 3)               // check MSB (sign bit) of z movement
-      *zmov = -int(((b4 & 0x7f) ^ 0x7f) + 1);
+   if ((b4 & 0x08) >> 3)               // check MSB (sign bit) of z movement
+      *zmov = -int(((b4 & 0x07) ^ 0x07) + 1);
    else
-	  *zmov = int(b4 & 0x7f); // data conversion
+	  *zmov = int(b4 & 0x07); // data conversion
    /* success */
    return (1);
 }

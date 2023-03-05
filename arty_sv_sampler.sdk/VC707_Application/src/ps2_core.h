@@ -74,7 +74,7 @@ class Ps2Core {
 	   uint8_t dequeue(void);
 	   void checkMovement();
 	   int byte(uint32_t data);
-	   int getPacket();
+	   void getPackets();
 	   static void handleInterrupt(Ps2Core *ps2);
 	   void setUpInterrupt();
 	   /**

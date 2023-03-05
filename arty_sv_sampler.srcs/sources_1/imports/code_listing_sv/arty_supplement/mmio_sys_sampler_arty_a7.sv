@@ -24,7 +24,7 @@ module mmio_sys_sampler_arty_a7
      (* dont_touch = "true" *) output logic tri_d,
      (* dont_touch = "true" *) input wire ps2c_in,
      (* dont_touch = "true" *) input wire ps2d_in,
-     (* dont_touch = "true" *)output logic ps2_rx_done_interrupt
+     (* dont_touch = "true" *) output logic ps2_rx_done_interrupt
 );
 
    //declaration

@@ -45,9 +45,9 @@ void ps2_check(Ps2Core *ps2_p) {
 	last = now_ms();
 	if (id == 1 || id == 2) {
 		do {
-			//ps2_p->checkMovement();
+			ps2_p->getPackets();
 			if (id == 2) {  // mouse
-				while (ps2_p->get_mouse_activity(&lbtn, &rbtn, &xmov, &ymov, &zmov)) {
+				if (ps2_p->get_mouse_activity(&lbtn, &rbtn, &xmov, &ymov, &zmov)) {
 			      if (lbtn || rbtn || xmov || ymov || zmov) {
 						xpos += xmov;
 						ypos += ymov;
@@ -73,7 +73,7 @@ void ps2_check(Ps2Core *ps2_p) {
 Ps2Core ps2(get_slot_addr(BRIDGE_BASE, S2_PS2));
 
 int main() {
-    ps2.setUpInterrupt();
+    //ps2.setUpInterrupt();
 	while (1) {
 		uart_check();
 		ps2_check(&ps2);
