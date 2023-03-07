@@ -25,7 +25,8 @@ extern "C" {
  *********************************************************************/
 // #ifdef _NEXYS4
 // system clock rate in MHz; used for timer and uart
-#define SYS_CLK_FREQ 100
+#define SYS_CLK_FREQ 200
+
 //io base address for microBlaze MCS
 #define BRIDGE_BASE 0xc0000000
 // slot module definition

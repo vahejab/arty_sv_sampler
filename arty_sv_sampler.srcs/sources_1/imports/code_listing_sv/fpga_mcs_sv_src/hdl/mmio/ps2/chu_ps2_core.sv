@@ -21,7 +21,7 @@ module chu_ps2_core
 
    // declaration
    logic [7:0] ps2_rx_data, rx_data;
-   logic rd_fifo, ps2_rx_buf_empty, ps2_rx_empty_reg;
+   logic rd_fifo, rd_en, ps2_rx_buf_empty, ps2_rx_empty_reg;
    logic wr_ps2, ps2_tx_idle;
    logic ps2_rx_idle;
    logic rm_rd_fifo;
@@ -56,6 +56,6 @@ module chu_ps2_core
    //  read data multiplexing
    always @(posedge clk)
    begin
-        rd_data <= {22'b0, ps2_rx_idle, ps2_rx_buf_empty, (rm_rd_fifo)? wr_data[7:0]: (rd_fifo)? ps2_rx_data: rd_data[7:0]};
+      rd_data <= {22'b0, ps2_rx_idle, ps2_rx_buf_empty, (rm_rd_fifo)? wr_data[7:0]: (rd_fifo)? ps2_rx_data: rd_data[7:0]};
    end
 endmodule  

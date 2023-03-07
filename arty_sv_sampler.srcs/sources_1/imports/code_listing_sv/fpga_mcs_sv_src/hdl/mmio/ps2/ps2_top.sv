@@ -69,6 +69,18 @@ module ps2_top
       (.clk(clk), .reset(reset), .rd(rd_ps2_packet),
        .wr(rx_done_tick), .w_data(rx_data), .empty(ps2_rx_buf_empty),
        .full(full), .r_data(ps2_rx_data));
+       
+       
+  /* fifo_generator_0 fifo (
+    .clk(clk),
+    .srst(reset),
+    .din(rx_data),
+    .wr_en(rx_done_tick),
+    .rd_en(rd_ps2_packet),
+    .dout(ps2_rx_data),
+    .full(full),
+    .empty(ps2_rx_buf_empty)
+  );*/
    //output 
    assign ps2_tx_idle = tx_idle;
    assign ps2_rx_idle = rx_idle;

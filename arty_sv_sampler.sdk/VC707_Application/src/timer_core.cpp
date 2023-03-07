@@ -49,8 +49,8 @@ uint64_t TimerCore::read_tick() {
 }
 
 uint64_t TimerCore::read_time() {
-   // elapsed time in microsecond (SYS_CLK_FREQ in MHz)
-   return (read_tick() / SYS_CLK_FREQ);
+   // elapsed time in microsecond from nanoseconds
+   return ((read_tick()) / SYS_CLK_FREQ);
 }
 
 void TimerCore::sleep(uint64_t us) {

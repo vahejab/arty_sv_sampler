@@ -18,7 +18,11 @@ module reg_file
    
    reg [ADDR_WIDTH-1:0] wr_region = 0;
    reg [ADDR_WIDTH-1:0] rd_region = 0;
-
+   
+   reg rd_en;
+   reg [ADDR_WIDTH-1:0] r_addr_reg, r_addr_reg2;
+   reg [DATA_WIDTH-1:0] r_data_reg;
+   
    // signal declaration
    logic [DATA_WIDTH-1:0] array_reg [0:2**ADDR_WIDTH-1];
    
@@ -29,8 +33,5 @@ module reg_file
       if (wr_en)
          array_reg[w_addr] <= w_data;
    end
- 
-    // read operation
    assign r_data = array_reg[r_addr];
-      
 endmodule

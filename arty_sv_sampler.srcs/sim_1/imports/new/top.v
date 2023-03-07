@@ -114,7 +114,7 @@ begin
    
    // Instantiate the module
     mcs_top_heat_arty_a7 mod (
-        .clk_100M(clk_100M),
+        .clk_100M(clk_200M),
         .reset(reset), 
         .ps2c_in(ps2c_in),
         .ps2d_in(ps2d_in),

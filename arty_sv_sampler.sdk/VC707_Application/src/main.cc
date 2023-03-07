@@ -62,7 +62,7 @@ void ps2_check(Ps2Core *ps2_p) {
 						uart.disp(ypos);
 						uart.disp(", ");
 						uart.disp(zpos);
-						uart.disp("] \r\n");
+						uart.disp("]\r\n");
 			       }
 				}   // end get_mouse_activitiy()
 			}
