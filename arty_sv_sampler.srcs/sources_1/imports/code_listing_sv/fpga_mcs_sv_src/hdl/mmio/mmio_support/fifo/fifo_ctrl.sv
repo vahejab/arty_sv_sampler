@@ -94,6 +94,6 @@ module fifo_ctrl
    // output
    assign w_addr = w_ptr_logic;
    assign r_addr = r_ptr_logic;
-   assign full = full_logic;
+   assign full =  full_logic;
    assign empty = empty_logic;
 endmodule

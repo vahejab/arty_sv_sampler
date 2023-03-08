@@ -56,7 +56,7 @@ class Ps2Core {
 	   *
 	   */
 	   enum field{
-		RX_IDLE_FIELD = 0x00000200, /**< bit 9 of rd_data_reg; idle bit  */
+		RX_READY_FIELD = 0x00000200, /**< bit 9 of rd_data_reg; ready bit  */
 		RX_EMPT_FIELD = 0x00000100, /**< bit 10 of rd_data_reg; empty bit */
 		RX_DATA_FIELD = 0x000000ff  /**< bits of 7..0 rd_data_reg; read data */
 	   };
@@ -83,7 +83,7 @@ class Ps2Core {
 		* @return 1: if empty; 0: otherwise
 		*
 		*/
-	   int rx_fifo_empty();
+	   int rx_fifo_empty(uint32_t rd_word);
 
 	   /**
 		* check whether the ps2 receiver is idle
@@ -91,7 +91,7 @@ class Ps2Core {
 		* @return 1: if idle; 0: otherwise
 		*
 		*/
-	   int rx_idle(uint32_t rd_word);
+	   int rx_ready(uint32_t rd_word);
 
 	   /**
 		* send an 8-bit command to ps2

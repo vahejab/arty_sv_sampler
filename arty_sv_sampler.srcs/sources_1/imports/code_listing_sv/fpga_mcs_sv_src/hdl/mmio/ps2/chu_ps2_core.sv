@@ -12,7 +12,6 @@ module chu_ps2_core
       (* dont_touch = "true" *)input  logic [31:0] wr_data,
       (* dont_touch = "true" *)output logic [31:0] rd_data,
       (* dont_touch = "true" *)output logic tri_c, tri_d, ps2c_out, ps2d_out,
-      (* dont_touch = "true" *)output logic ps2_rx_done_interrupt,
       
     // external ports    
       (* dont_touch = "true" *)input wire ps2d_in,
@@ -25,6 +24,7 @@ module chu_ps2_core
    logic wr_ps2, ps2_tx_idle;
    logic ps2_rx_idle;
    logic rm_rd_fifo;
+   logic ps2_rx_new_data, rx_done_tick;
 
    // body
    // instantiate PS2 controller   
@@ -38,7 +38,7 @@ module chu_ps2_core
        .ps2_tx_idle(ps2_tx_idle),
        .ps2_rx_idle(ps2_rx_idle), 
        .ps2_rx_buf_empty(ps2_rx_buf_empty),
-       .ps2_rx_done_interrupt(ps2_rx_done_interrupt),
+       .rx_done_tick(rx_done_tick),
        .ps2d_in(ps2d_in), 
        .ps2c_in(ps2c_in), 
        .tri_c(tri_c), 
@@ -56,6 +56,13 @@ module chu_ps2_core
    //  read data multiplexing
    always @(posedge clk)
    begin
-      rd_data <= {22'b0, ps2_rx_idle, ps2_rx_buf_empty, (rm_rd_fifo)? wr_data[7:0]: (rd_fifo)? ps2_rx_data: rd_data[7:0]};
+      if (rx_done_tick)
+         ps2_rx_new_data <= 1;
+      if (rd_fifo)
+         ps2_rx_new_data <= 0;
+      if (rd_fifo)
+        rd_data <= {22'b0, ps2_rx_new_data, ps2_rx_buf_empty, (!ps2_rx_buf_empty)? ps2_rx_data: rd_data[7:0]};
+      else if (rm_rd_fifo)
+        rd_data <= {22'b0, 1'b1, ps2_rx_buf_empty, wr_data[7:0]};
    end
 endmodule  

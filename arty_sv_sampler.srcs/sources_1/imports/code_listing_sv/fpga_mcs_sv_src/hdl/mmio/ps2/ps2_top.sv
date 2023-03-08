@@ -6,7 +6,7 @@ module ps2_top
       (* dont_touch = "true" *)input  logic wr_ps2, rd_ps2_packet,
       (* dont_touch = "true" *)input  logic [7:0] ps2_tx_data,
       (* dont_touch = "true" *)output logic [7:0] ps2_rx_data,
-      (* dont_touch = "true" *)output logic ps2_rx_done_interrupt,
+      (* dont_touch = "true" *)output logic rx_done_tick,
       (* dont_touch = "true" *)output logic ps2_tx_idle,
       (* dont_touch = "true" *)output logic ps2_rx_idle,
       (* dont_touch = "true" *)output logic ps2_rx_buf_empty,
@@ -23,9 +23,9 @@ module ps2_top
    logic [7:0] rx_data;
    logic full;
    logic rx_done_tick;
-   logic [3:0] rx_done_intr_high_count;
+   //logic [3:0] rx_done_intr_high_count;
    
-   always @(posedge clk)
+  /* always @(posedge clk)
    begin
       if (rx_done_tick || (rx_done_intr_high_count > 0 && rx_done_intr_high_count < 4))
         rx_done_intr_high_count <= rx_done_intr_high_count + 1;
@@ -34,6 +34,7 @@ module ps2_top
    end
    
    assign ps2_rx_done_interrupt = rx_done_tick || (rx_done_intr_high_count > 0 && rx_done_intr_high_count < 4);
+   */
    
    // body
    // instantiate ps2 transmitter
