@@ -45,7 +45,7 @@ module ps2_top
        .rx_idle(rx_idle),
        .din(ps2_tx_data), 
        .tx_idle(tx_idle), 
-       .tx_done_tick(), 
+       .tx_done_tick(tx_done_tick), 
        .ps2d_in(ps2d_in), 
        .ps2c_in(ps2c_in),
        .tri_c(tri_c),
@@ -69,7 +69,7 @@ module ps2_top
    fifo #(.DATA_WIDTH(8), .ADDR_WIDTH(W_SIZE), .PS2_MODE(1)) fifo_unit
       (.clk(clk), .reset(reset), .rd(rd_ps2_packet),
        .wr(rx_done_tick), .w_data(rx_data), .empty(ps2_rx_buf_empty),
-       .full(full), .r_data(ps2_rx_data));
+       .full(full), .r_data(ps2_rx_data), .rx_done(rx_done_tick), .tx_done(tx_done_tick));
        
        
   /* fifo_generator_0 fifo (

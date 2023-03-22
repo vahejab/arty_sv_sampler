@@ -29,11 +29,11 @@ module uart
 
    fifo #(.DATA_WIDTH(DBIT), .ADDR_WIDTH(FIFO_W)) fifo_rx_unit
       (.*, .rd(rd_uart), .wr(rx_done_tick), .w_data(rx_data_out),
-       .empty(rx_empty), .full(), .r_data(r_data));
+       .empty(rx_empty), .full(), .r_data(r_data), .rx_done(), .tx_done());
 
    fifo #(.DATA_WIDTH(DBIT), .ADDR_WIDTH(FIFO_W)) fifo_tx_unit
       (.*, .rd(tx_done_tick), .wr(wr_uart), .w_data(w_data), .empty(tx_empty),
-       .full(tx_full), .r_data(tx_fifo_out));
+       .full(tx_full), .r_data(tx_fifo_out), .rx_done(), .tx_done());
 
    assign tx_fifo_not_empty = ~tx_empty;
 endmodule

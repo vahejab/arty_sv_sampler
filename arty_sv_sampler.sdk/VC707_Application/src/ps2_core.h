@@ -91,8 +91,8 @@ class Ps2Core {
 		* @return 1: if idle; 0: otherwise
 		*
 		*/
+	   int rx_idle(uint32_t rd_word);
 	   int rx_ready(uint32_t rd_word);
-
 	   /**
 		* send an 8-bit command to ps2
 		*

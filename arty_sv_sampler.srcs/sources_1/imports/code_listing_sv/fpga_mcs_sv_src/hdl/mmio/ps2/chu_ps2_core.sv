@@ -19,13 +19,14 @@ module chu_ps2_core
    );
 
    // declaration
-   logic [7:0] ps2_rx_data, rx_data;
+   logic [7:0] ps2_rx_data;
    logic rd_fifo, rd_en, ps2_rx_buf_empty, ps2_rx_empty_reg;
    logic wr_ps2, ps2_tx_idle;
    logic ps2_rx_idle;
    logic rm_rd_fifo;
    logic ps2_rx_new_data, rx_done_tick;
-
+   logic data_available;
+   logic rd_done;
    // body
    // instantiate PS2 controller   
    ps2_top #(.W_SIZE(W_SIZE)) ps2_unit
@@ -56,13 +57,10 @@ module chu_ps2_core
    //  read data multiplexing
    always @(posedge clk)
    begin
-      if (rx_done_tick)
-         ps2_rx_new_data <= 1;
       if (rd_fifo)
-         ps2_rx_new_data <= 0;
-      if (rd_fifo)
-        rd_data <= {22'b0, ps2_rx_new_data, ps2_rx_buf_empty, (!ps2_rx_buf_empty)? ps2_rx_data: rd_data[7:0]};
-      else if (rm_rd_fifo)
-        rd_data <= {22'b0, 1'b1, ps2_rx_buf_empty, wr_data[7:0]};
+        rd_data <= {22'b0, ps2_rx_idle, ps2_rx_buf_empty, ps2_rx_data};
+      else if (rm_rd_fifo) 
+        rd_data <= {22'b0, ps2_rx_idle, ps2_rx_buf_empty, wr_data[7:0]};
    end
+  
 endmodule  

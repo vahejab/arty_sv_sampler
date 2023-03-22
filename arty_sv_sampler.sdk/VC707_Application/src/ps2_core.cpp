@@ -65,16 +65,24 @@ void Ps2Core::getPackets() {
     		;
         byteArray[bytesProcessed++] = byte(data);
     	continue;
-        if ((bytesProcessed == 0) && (byte(data) & 0x08) == 0x08) {
-        	if ((data & 0xF0) == 0xF0 || (data & 0xC0) >= 0x40) {//error or overflow on at least one of x, y
-        		bytesProcessed++;
-        		error = 1;
+        if ((bytesProcessed == 0) && (byte(data) & 0x08) != 0x08) {
+         	bytesProcessed++;
+            error = 1;
+        }
+        else if (error == 1 && bytesProcessed < 3)
+        	bytesProcessed++;
+        else if (error == 1 && bytesProcessed == 3){
+        	bytesProcessed = 0;
+        	error = 0;
+			for (int idx = 0; idx < 4; idx++) {
+				byteArray[idx] = 0x00;
 			}
-        	else {
-				byteArray[bytesProcessed++] = byte(data);
-        	}
-		}
-        else if (bytesProcessed >= 1) {
+        }
+        else
+        	byteArray[bytesProcessed++] = byte(data);
+
+
+        /*else if (bytesProcessed >= 1) {
         	if ((bytesProcessed == 1 && ((byteArray[0] & 0x08) == 0x00)) ||
         	    (bytesProcessed == 1 && (byte(data) & 0x80) >> 7 != (byteArray[0] & 0x10) >> 4) ||
         	    (bytesProcessed == 2 && (byte(data) & 0x80) >> 7 != (byteArray[0] & 0x20) >> 5) ||
@@ -100,7 +108,7 @@ void Ps2Core::getPackets() {
         	else {
            		byteArray[bytesProcessed++] = byte(data);
         	}
-        }
+        }*/
     }
     for (int idx = 0; idx < 4; idx++) {
     	enqueue(byteArray[idx]);
@@ -121,13 +129,16 @@ int Ps2Core::rx_word_from_byte() {
 int Ps2Core::rx_byte() {
    uint32_t data;
    data = io_read(base_addr, RD_DATA_REG) & RX_DATA_FIELD;
-   io_write(base_addr, RM_RD_DATA_REG, 0); //dummy write to remove data from rx FIFO
+   //io_write(base_addr, RM_RD_DATA_REG, 0); //dummy write to remove data from rx FIFO
    return ((int) data);
 }
 
 
-
 int Ps2Core::rx_ready(uint32_t rd_word) {
+   return rx_idle(rd_word) && !rx_fifo_empty(rd_word);
+}
+
+int Ps2Core::rx_idle(uint32_t rd_word) {
    int idle;
 
    //rd_word = io_read(base_addr, RD_DATA_REG);
@@ -176,12 +187,13 @@ int Ps2Core::hex(dir direction = dir::SEND, int num = 0)
  */
 
 int Ps2Core::init() {
-   static uint32_t data = 0x00000300;
+   static uint32_t data = 0x00000200;
    int last = 0;
-   while(!rx_fifo_empty(data))
-	   data = rx_word_from_byte();
+   //while(!rx_fifo_empty(data = rx_word_from_byte()))
+   //   ;
    hex(dir::SEND, tx_byte(0xFF));  //Reset Mouse
    last = now_ms();
+   //sleep_ms(3000);
    //data = rx_word_from_byte();
    while(!rx_ready(data = rx_word_from_byte()))
 	  ;
@@ -244,6 +256,8 @@ int Ps2Core::init() {
    while(!rx_ready(data = rx_word_from_byte()))
 	  ;
    if (hex(dir::RECV, byte(data)) != 0xFA) return -13;
+   //hex(dir::SEND, tx_byte(0xF5));  //Disable Data Reporting
+   //hex(dir::SEND, tx_byte(0xF4));  //Re-Enable Data Reporting
    return (2);  //Mouse Detected and Initialized Successfully
 }
 int Ps2Core::get_mouse_activity(int *lbtn, int *rbtn, int *xmov,

@@ -11,7 +11,7 @@
 
 UartCore::UartCore(uint32_t core_base_addr) {
    base_addr = core_base_addr;
-   set_baud_rate(9600);      //default baud rate
+   set_baud_rate(115200);      //default baud rate
 }
 
 UartCore::~UartCore() {

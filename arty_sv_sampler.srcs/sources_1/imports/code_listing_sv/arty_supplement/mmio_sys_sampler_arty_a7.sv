@@ -70,7 +70,7 @@ module mmio_sys_sampler_arty_a7
     .rx(rx)
     );
    // slot 2: ps2 
-    chu_ps2_core #(.W_SIZE(6)) ps2_slot2 
+    chu_ps2_core #(.W_SIZE(8)) ps2_slot2 
     (.clk(clk),
      .reset(reset),
      .cs(cs_array[`S2_PS2]),

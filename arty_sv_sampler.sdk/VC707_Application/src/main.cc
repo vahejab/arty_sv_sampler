@@ -48,7 +48,7 @@ void ps2_check(Ps2Core *ps2_p) {
 			ps2_p->getPackets();
 			if (id == 2) {  // mouse
 				if (ps2_p->get_mouse_activity(&lbtn, &rbtn, &xmov, &ymov, &zmov)) {
-			      if (lbtn || rbtn || xmov || ymov || zmov) {
+			      //if (lbtn || rbtn || xmov || ymov || zmov) {
 						xpos += xmov;
 						ypos += ymov;
 						zpos += zmov;
@@ -63,7 +63,7 @@ void ps2_check(Ps2Core *ps2_p) {
 						uart.disp(", ");
 						uart.disp(zpos);
 						uart.disp("]\r\n");
-			       }
+			       //}
 				}   // end get_mouse_activitiy()
 			}
 		} while (now_ms() - last < 5000 || id > 0);

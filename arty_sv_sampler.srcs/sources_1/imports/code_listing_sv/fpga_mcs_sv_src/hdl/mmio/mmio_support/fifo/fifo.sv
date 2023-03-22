@@ -10,24 +10,29 @@ module fifo
     input  logic rd, wr,
     input  logic [DATA_WIDTH-1:0] w_data,
     output logic empty, full,
-    output logic [DATA_WIDTH-1:0] r_data
+    output logic [DATA_WIDTH-1:0] r_data,
+    input  logic rx_done,
+    input  logic tx_done
    );
 
    //signal declaration
    logic [ADDR_WIDTH-1:0] w_addr, r_addr;
-   logic wr_en, full_tmp;
+   wire enable_write;
+   reg full_tmp;
+   wire wr_fifo;
+   wire write;
 
    // body
    // write enabled only when FIFO is not full
-   assign wr_en = wr & ~full_tmp;
+   assign write = wr & ~full_tmp;//((wr & ~full_tmp) & !PS2_MODE) || (enable_write);
    assign full = full_tmp;
-   
+
    // instantiate fifo control unit
-   fifo_ctrl #(.ADDR_WIDTH(ADDR_WIDTH), .PS2_MODE(PS2_MODE)) c_unit
-      (.*, .full(full_tmp));
+   fifo_ctrl #(.ADDR_WIDTH(ADDR_WIDTH)) c_unit
+      (.*, .wr(write), .full(full_tmp));
 
    // instantiate register file
    reg_file 
-      #(.DATA_WIDTH(DATA_WIDTH), .ADDR_WIDTH(ADDR_WIDTH), .PS2_MODE(PS2_MODE)) f_unit (.*);
+      #(.DATA_WIDTH(DATA_WIDTH), .ADDR_WIDTH(ADDR_WIDTH), .PS2_MODE(PS2_MODE)) f_unit (.*, .wr_en(write), .rx_done(rx_done), .tx_done(tx_done), .enable_write(enable_write));
 endmodule
 
