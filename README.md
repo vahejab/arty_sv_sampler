@@ -191,7 +191,7 @@ To initialize a PS/2 mouse, the following steps are typically taken:
 <table>
   <tbody>
     <tr>
-      <td>Byte #</td>
+      <td>**Byte #**</td>
       <td>
 	<center>Bit 7</center>
       </td>
@@ -218,7 +218,7 @@ To initialize a PS/2 mouse, the following steps are typically taken:
       </td>
     </tr>
     <tr>
-      <td>Byte 1</td>
+      <td>**Byte 1**</td>
       <td>
 	<center>Y overflow</center>
       </td>
@@ -245,19 +245,19 @@ To initialize a PS/2 mouse, the following steps are typically taken:
       </td>
     </tr>
     <tr>
-      <td>Byte 2</td>
+      <td>**Byte 2**</td>
       <td colspan="8">
 	 <span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;X Movement</span>     
       </td>
     </tr>
     <tr>   
-      <td>Byte 3</td>
+      <td>**Byte 3**</td>
       <td colspan="8">
         <span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Y Movement</span>
       </td> 
     </tr>
     <tr>   
-      <td>Byte 4</td>
+      <td>**Byte 4**</td>
       <td>
 	<center>Always 0</center>
       </td>
