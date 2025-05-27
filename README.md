@@ -20,7 +20,7 @@ This project uses the following hardware components:
    <li><a href="https://digilent.com/reference/fmc_ce_card/fmc_ce_card/" target="_new">Digilent FMC-CE adapter</a></li>
    <li><a href="https://digilent.com/reference/pmod/pmodbb/" target="_new">Digilent PMOD-BB</a></li>
    <li><a href="https://www.sparkfun.com/products/15439" target="_new">SparkFun PCA9306 level-shifter</a></li>
-   <li><a href="https://www.kensington.com/p/products/electronic-control-solutions/trackball-products/expert-mouse-wired-trackball/" target="_new">Kensington Expert Mouse</a></li>
+   <li><a href="[https://www.kensington.com/p/products/electronic-control-solutions/trackball-products/expert-mouse-wired-trackball/](https://www.kensington.com/p/products/electronic-control-solutions/trackball-products/expert-mouse-wired-trackball3-1/)" target="_new">Kensington Expert Mouse</a></li>
 </ul>
 
 Design Hierarchy
