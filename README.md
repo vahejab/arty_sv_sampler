@@ -23,6 +23,14 @@ This project uses the following hardware components:
    <li><a href="https://www.kensington.com/p/products/electronic-control-solutions/trackball-products/expert-mouse-wired-trackball3-1/" target="_new">Kensington Expert Mouse</a></li>
 </ul>
 
+
+Physical Configuration
+-------------------
+
+
+![Physical Hardware Configuration](https://github.com/user-attachments/assets/ec56f650-c5cf-45ac-8f8f-db2bfec0ff98)
+
+
 Design Hierarchy
 -------------------
 
