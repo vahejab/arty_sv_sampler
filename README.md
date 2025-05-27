@@ -191,7 +191,7 @@ To initialize a PS/2 mouse, the following steps are typically taken:
 <table>
   <tbody>
     <tr>
-      <td>Byte 1</td>
+      <td>Byte #</td>
       <td>
 	<center>Bit 7</center>
       </td>
